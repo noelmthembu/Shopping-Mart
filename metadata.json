@@ -1,0 +1,6 @@
+{
+  "name": "SmartShopper",
+  "description": "South African offline store catalogue and budget shopping list (ZAR) featuring Checkers, Pick n Pay, Woolworths, Shoprite, and Makro specials from my-catalogue.co.za with remaining balance calculator and loyalty rewards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
