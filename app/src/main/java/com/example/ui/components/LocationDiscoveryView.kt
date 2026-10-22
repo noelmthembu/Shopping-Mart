@@ -235,7 +235,7 @@ fun LocationDiscoveryScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Text Field for Suburb / Mall
+                    // Text Field for Suburb / Mall with Live Autocomplete
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -243,7 +243,7 @@ fun LocationDiscoveryScreen(
                         OutlinedTextField(
                             value = searchText,
                             onValueChange = { searchText = it },
-                            placeholder = { Text("e.g. Sandton, Rosebank, Menlyn...") },
+                            placeholder = { Text("Search suburb, mall, city (e.g. Sandton, Sea Point)...") },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                             singleLine = true,
                             shape = RoundedCornerShape(14.dp),
@@ -271,6 +271,109 @@ fun LocationDiscoveryScreen(
                             modifier = Modifier.testTag("set_custom_suburb_button")
                         ) {
                             Icon(Icons.Default.ArrowForward, contentDescription = "Continue")
+                        }
+                    }
+
+                    // Autocomplete Suggestions Dropdown
+                    if (searchText.isNotBlank()) {
+                        val matchingPresets = LocationHelper.SA_POPULAR_PRESETS.filter {
+                            it.name.contains(searchText, ignoreCase = true) ||
+                            it.cityOrRegion.contains(searchText, ignoreCase = true)
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surface,
+                            shadowElevation = 3.dp,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Text(
+                                    text = if (matchingPresets.isNotEmpty()) "Matching Locations & Stores (${matchingPresets.size}):" else "Custom Location:",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                                if (matchingPresets.isNotEmpty()) {
+                                    matchingPresets.take(4).forEach { preset ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    onLocationSelected(preset.latitude, preset.longitude, "${preset.name}, ${preset.cityOrRegion}")
+                                                }
+                                                .padding(horizontal = 8.dp, vertical = 10.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.LocationOn,
+                                                contentDescription = null,
+                                                tint = Color(0xFF007A3D),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = preset.name,
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Text(
+                                                    text = "${preset.cityOrRegion} • 7 Stores Available (Checkers, PnP, Woolworths)",
+                                                    fontSize = 11.sp,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = Color(0xFF007A3D).copy(alpha = 0.15f)
+                                            ) {
+                                                Text(
+                                                    text = "Select",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF007A3D),
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                onLocationSelected(-26.1076, 28.0567, searchText.trim())
+                                            }
+                                            .padding(horizontal = 8.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.LocationCity,
+                                            contentDescription = null,
+                                            tint = Color(0xFF007A3D),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "Use \"${searchText.trim()}\"",
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = "Search stores near this custom address",
+                                                fontSize = 11.sp,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 

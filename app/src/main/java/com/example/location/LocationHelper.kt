@@ -53,7 +53,17 @@ class LocationHelper(private val context: Context) {
             SouthAfricanAreaPreset("Canal Walk / Century City", "Cape Town, Western Cape", -33.8924, 18.5118),
             SouthAfricanAreaPreset("Gateway Theatre of Shopping", "Umhlanga, Durban", -29.7262, 31.0667),
             SouthAfricanAreaPreset("Mall of Africa", "Midrand, Gauteng", -26.0154, 28.1065),
-            SouthAfricanAreaPreset("Maponya Mall", "Soweto, Gauteng", -26.2736, 27.8922)
+            SouthAfricanAreaPreset("Maponya Mall", "Soweto, Gauteng", -26.2736, 27.8922),
+            SouthAfricanAreaPreset("Hyde Park Corner", "Johannesburg, Gauteng", -26.1260, 28.0380),
+            SouthAfricanAreaPreset("Fourways Mall", "Johannesburg, Gauteng", -26.0245, 28.0089),
+            SouthAfricanAreaPreset("Cresta Shopping Centre", "Randburg, Gauteng", -26.1444, 27.9719),
+            SouthAfricanAreaPreset("Brooklyn Mall", "Pretoria, Gauteng", -25.7681, 28.2372),
+            SouthAfricanAreaPreset("Sea Point Promenade", "Cape Town, Western Cape", -33.9213, 18.3847),
+            SouthAfricanAreaPreset("Umhlanga Ridge", "Durban, KwaZulu-Natal", -29.7285, 31.0792),
+            SouthAfricanAreaPreset("Claremont", "Cape Town, Western Cape", -33.9823, 18.4687),
+            SouthAfricanAreaPreset("Centurion Mall", "Centurion, Gauteng", -25.8521, 28.1856),
+            SouthAfricanAreaPreset("Melville", "Johannesburg, Gauteng", -26.1741, 28.0094),
+            SouthAfricanAreaPreset("Bedfordcentre", "Bedfordview, Gauteng", -26.1834, 28.1345)
         )
     }
 
