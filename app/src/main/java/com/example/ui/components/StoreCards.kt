@@ -53,39 +53,52 @@ import com.example.ui.theme.StoreBrandColors
 
 @Composable
 fun StoreBrandBadge(store: Store, modifier: Modifier = Modifier) {
-    val (bgColor, brandInitials, subtitle) = when {
-        store.name.contains("Checkers", ignoreCase = true) -> Triple(StoreBrandColors.Checkers, "CHK", "Hyper")
-        store.name.contains("Pick n Pay", ignoreCase = true) -> Triple(StoreBrandColors.PickNPay, "PnP", "Retail")
-        store.name.contains("Woolworths", ignoreCase = true) -> Triple(StoreBrandColors.Woolworths, "W", "Food")
-        store.name.contains("Shoprite", ignoreCase = true) -> Triple(StoreBrandColors.Shoprite, "SHP", "Value")
-        store.name.contains("Makro", ignoreCase = true) -> Triple(StoreBrandColors.Makro, "MKR", "Bulk")
-        store.name.contains("SPAR", ignoreCase = true) -> Triple(StoreBrandColors.SPAR, "SPAR", "Fresh")
-        store.name.contains("Clicks", ignoreCase = true) -> Triple(StoreBrandColors.Clicks, "CLK", "Care")
-        else -> Triple(Color(0xFF007A3D), "RET", "Store")
+    val (bgColor, brandText, subtitle) = when {
+        store.name.contains("Checkers", ignoreCase = true) -> Triple(StoreBrandColors.Checkers, "Checkers", "HYPER")
+        store.name.contains("Pick n Pay", ignoreCase = true) -> Triple(StoreBrandColors.PickNPay, "Pick n Pay", "SUPER")
+        store.name.contains("Woolworths", ignoreCase = true) -> Triple(StoreBrandColors.Woolworths, "WOOLIES", "FOOD")
+        store.name.contains("Shoprite", ignoreCase = true) -> Triple(StoreBrandColors.Shoprite, "SHOPRITE", "LOWEST")
+        store.name.contains("Makro", ignoreCase = true) -> Triple(StoreBrandColors.Makro, "makro", "BULK")
+        store.name.contains("SPAR", ignoreCase = true) -> Triple(StoreBrandColors.SPAR, "SPAR", "FRESH")
+        store.name.contains("Clicks", ignoreCase = true) -> Triple(StoreBrandColors.Clicks, "CLICKS", "PHARM")
+        else -> Triple(Color(0xFF007A3D), "STORE", "LOCAL")
     }
 
     Box(
         modifier = modifier
-            .size(50.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .size(width = 64.dp, height = 50.dp)
+            .clip(RoundedCornerShape(12.dp))
             .background(bgColor)
-            .border(1.5.dp, Color.White.copy(alpha = 0.25f), RoundedCornerShape(14.dp)),
+            .border(1.5.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(horizontal = 2.dp)
+        ) {
             Text(
-                text = brandInitials,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.ExtraBold,
+                text = brandText,
+                fontSize = if (brandText.length > 6) 8.sp else 10.sp,
+                fontWeight = FontWeight.Black,
                 color = Color.White,
-                letterSpacing = 0.5.sp
+                maxLines = 1,
+                letterSpacing = 0.2.sp
             )
-            Text(
-                text = subtitle,
-                fontSize = 8.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White.copy(alpha = 0.85f)
-            )
+            Spacer(modifier = Modifier.height(1.dp))
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = Color.White.copy(alpha = 0.25f)
+            ) {
+                Text(
+                    text = subtitle,
+                    fontSize = 7.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 3.dp, vertical = 0.5.dp),
+                    maxLines = 1
+                )
+            }
         }
     }
 }
