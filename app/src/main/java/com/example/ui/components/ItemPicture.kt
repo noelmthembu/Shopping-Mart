@@ -190,18 +190,18 @@ object ProductVisuals {
     fun getProductDrawableRes(name: String, imageType: String): Int? {
         val lower = "$name $imageType".lowercase()
         return when {
-            // KOO Baked Beans in Tomato Sauce
+            // KOO
             lower.contains("koo") -> R.drawable.product_koo_beans
-            // Rhodes Baked Beans in Tomato Sauce
-            lower.contains("rhodes") && (lower.contains("bean") || lower.contains("baked")) -> R.drawable.product_rhodes_beans
-            // Baramakama Eggs Large 30's
-            lower.contains("baramakama") || (lower.contains("eggs") && (lower.contains("30") || lower.contains("tray"))) -> R.drawable.deal_baramakama_eggs
-            // Thokoman Peanut Butter Smooth
+            // Rhodes
+            lower.contains("rhodes") -> R.drawable.product_rhodes_beans
+            // Baramakama Eggs
+            lower.contains("baramakama") || lower.contains("egg") -> R.drawable.deal_baramakama_eggs
+            // Thokoman Peanut Butter
             lower.contains("thokoman") || lower.contains("peanut butter") -> R.drawable.deal_thokoman
-            // Clover Full Cream Fresh Milk 2L
-            lower.contains("clover") && lower.contains("milk") -> R.drawable.product_clover_milk
-            // White Star Super Maize Meal 5kg
-            lower.contains("white star") || (lower.contains("maize") && lower.contains("super")) -> R.drawable.product_white_star_maize
+            // Clover Milk
+            lower.contains("clover") || (lower.contains("milk") && !lower.contains("coconut")) -> R.drawable.product_clover_milk
+            // White Star Maize
+            lower.contains("white star") || lower.contains("maize") || lower.contains("mielie") -> R.drawable.product_white_star_maize
             else -> null
         }
     }

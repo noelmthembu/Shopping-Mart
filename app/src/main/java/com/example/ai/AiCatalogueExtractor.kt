@@ -77,6 +77,19 @@ class AiCatalogueExtractor(private val context: Context) {
         )
     }
 
+    private fun resolveBrandImageType(name: String, candidateType: String): String {
+        val lower = "$name $candidateType".lowercase()
+        return when {
+            lower.contains("koo") -> "koo_beans"
+            lower.contains("rhodes") -> "rhodes_beans"
+            lower.contains("baramakama") || lower.contains("egg") -> "baramakama_eggs"
+            lower.contains("thokoman") || lower.contains("peanut butter") -> "thokoman"
+            lower.contains("clover") || (lower.contains("milk") && !lower.contains("coconut")) -> "clover_milk"
+            lower.contains("white star") || lower.contains("maize") || lower.contains("mielie") -> "white_star"
+            else -> candidateType
+        }
+    }
+
     /**
      * Extracts retail products and deals from a supermarket flyer bitmap using Gemini 3.8 Flash multimodal vision.
      */
@@ -129,15 +142,18 @@ class AiCatalogueExtractor(private val context: Context) {
             if (productsArray != null) {
                 for (i in 0 until productsArray.length()) {
                     val p = productsArray.getJSONObject(i)
+                    val name = p.getString("name")
+                    val candidateType = p.optString("imageType", "pantry")
+                    val brandType = resolveBrandImageType(name, candidateType)
                     products.add(
                         ExtractedProduct(
-                            name = p.getString("name"),
+                            name = name,
                             category = p.optString("category", "Pantry & Staples"),
                             regularPrice = p.optDouble("regularPrice", 19.99),
                             cardDiscountPrice = p.optDouble("cardDiscountPrice", 14.99),
                             unit = p.optString("unit", "each"),
                             promoTag = p.optString("promoTag", "SPECIAL DEAL"),
-                            imageType = p.optString("imageType", "pantry")
+                            imageType = brandType
                         )
                     )
                 }
