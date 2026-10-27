@@ -67,7 +67,7 @@ class NotificationHelper(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val title = "🏷️ Deal Alert: ${store.name}"
+        val title = "Deal Alert: ${store.name}"
         val text = promoText.ifBlank {
             "Special loyalty discounts and catalogue deals active right now near your location!"
         }

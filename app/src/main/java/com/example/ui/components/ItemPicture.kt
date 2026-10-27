@@ -1,13 +1,17 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BakeryDining
@@ -21,25 +25,25 @@ import androidx.compose.material.icons.filled.OutdoorGrill
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.R
 
 enum class PictureSize(val dp: Dp, val iconSize: Dp, val fontSize: Float) {
     SMALL(46.dp, 22.dp, 18f),
@@ -50,7 +54,6 @@ enum class PictureSize(val dp: Dp, val iconSize: Dp, val fontSize: Float) {
 data class ProductVisualTheme(
     val bgGradient: Brush,
     val icon: ImageVector,
-    val emoji: String,
     val accentColor: Color,
     val labelText: String
 )
@@ -64,7 +67,6 @@ object ProductVisuals {
             lower.contains("milk") || lower.contains("dairy") || lower.contains("clover") || lower.contains("ayrshire") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFE1F5FE), Color(0xFFB3E5FC))),
                 icon = Icons.Default.Egg,
-                emoji = "🥛",
                 accentColor = Color(0xFF0288D1),
                 labelText = "Dairy"
             )
@@ -73,7 +75,6 @@ object ProductVisuals {
             lower.contains("chops") || lower.contains("mince") || lower.contains("beef") || lower.contains("butchery") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFFFEBEE), Color(0xFFFFCDD2))),
                 icon = Icons.Default.OutdoorGrill,
-                emoji = "🥩",
                 accentColor = Color(0xFFD32F2F),
                 labelText = "Braai"
             )
@@ -81,7 +82,6 @@ object ProductVisuals {
             lower.contains("chicken") || lower.contains("rotisserie") || lower.contains("rainbow") || lower.contains("goldi") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFFFF3E0), Color(0xFFFFE0B2))),
                 icon = Icons.Default.Restaurant,
-                emoji = "🍗",
                 accentColor = Color(0xFFE65100),
                 labelText = "Chicken"
             )
@@ -90,7 +90,6 @@ object ProductVisuals {
             lower.contains("croissant") || lower.contains("rusks") || lower.contains("sasko") || lower.contains("albany") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFFFF8E1), Color(0xFFFFECB3))),
                 icon = Icons.Default.BakeryDining,
-                emoji = "🍞",
                 accentColor = Color(0xFFFFA000),
                 labelText = "Bakery"
             )
@@ -99,7 +98,6 @@ object ProductVisuals {
             lower.contains("jacobs") || lower.contains("five roses") || lower.contains("rooibos") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFEFEBE9), Color(0xFFD7CCC8))),
                 icon = Icons.Default.Coffee,
-                emoji = "☕",
                 accentColor = Color(0xFF5D4037),
                 labelText = "Coffee"
             )
@@ -108,7 +106,6 @@ object ProductVisuals {
             lower.contains("beverage") || lower.contains("appletiser") || lower.contains("drink") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFFFEBEE), Color(0xFFFFCDD2))),
                 icon = Icons.Default.LocalDrink,
-                emoji = "🥤",
                 accentColor = Color(0xFFC2185B),
                 labelText = "Drinks"
             )
@@ -116,7 +113,6 @@ object ProductVisuals {
             lower.contains("castle") || lower.contains("beer") || lower.contains("lager") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFFFFDE7), Color(0xFFFFF59D))),
                 icon = Icons.Default.LocalDrink,
-                emoji = "🍺",
                 accentColor = Color(0xFFFBC02D),
                 labelText = "Beverage"
             )
@@ -124,7 +120,6 @@ object ProductVisuals {
             lower.contains("butter") || lower.contains("butro") || lower.contains("spread") || lower.contains("cheese") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFFFFDE7), Color(0xFFFFF9C4))),
                 icon = Icons.Default.Egg,
-                emoji = "🧈",
                 accentColor = Color(0xFFFBC02D),
                 labelText = "Dairy"
             )
@@ -133,7 +128,6 @@ object ProductVisuals {
             lower.contains("tastic") || lower.contains("sugar") || lower.contains("huletts") || lower.contains("flour") || lower.contains("staple") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFE8F5E9), Color(0xFFC8E6C9))),
                 icon = Icons.Default.Restaurant,
-                emoji = "🌾",
                 accentColor = Color(0xFF388E3C),
                 labelText = "Staples"
             )
@@ -141,7 +135,6 @@ object ProductVisuals {
             lower.contains("chips") || lower.contains("simba") || lower.contains("lay's") || lower.contains("snack") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFFFF3E0), Color(0xFFFFE0B2))),
                 icon = Icons.Default.LocalPizza,
-                emoji = "🥔",
                 accentColor = Color(0xFFF57C00),
                 labelText = "Snacks"
             )
@@ -150,7 +143,6 @@ object ProductVisuals {
             lower.contains("biscuit") || lower.contains("sweet") || lower.contains("romany") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFF3E5F5), Color(0xFFE1BEE7))),
                 icon = Icons.Default.Restaurant,
-                emoji = "🍫",
                 accentColor = Color(0xFF7B1FA2),
                 labelText = "Treats"
             )
@@ -159,7 +151,6 @@ object ProductVisuals {
             lower.contains("fruit") || lower.contains("veg") || lower.contains("kiwi") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFE8F8F2), Color(0xFFC8E6C9))),
                 icon = Icons.Default.Restaurant,
-                emoji = "🥑",
                 accentColor = Color(0xFF007A3D),
                 labelText = "Fresh"
             )
@@ -168,7 +159,6 @@ object ProductVisuals {
             lower.contains("all gold") || lower.contains("chutney") || lower.contains("mayonnaise") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFFFEBEE), Color(0xFFFFCDD2))),
                 icon = Icons.Default.Restaurant,
-                emoji = "🥫",
                 accentColor = Color(0xFFD32F2F),
                 labelText = "Pantry"
             )
@@ -177,7 +167,6 @@ object ProductVisuals {
             lower.contains("dishwashing") || lower.contains("toilet") || lower.contains("clean") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFE0F7FA), Color(0xFFB2EBF2))),
                 icon = Icons.Default.CleaningServices,
-                emoji = "🧼",
                 accentColor = Color(0xFF0097A7),
                 labelText = "Clean"
             )
@@ -186,17 +175,34 @@ object ProductVisuals {
             lower.contains("diaper") || lower.contains("dettol") || lower.contains("pharmacy") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFEDE7F6), Color(0xFFD1C4E9))),
                 icon = Icons.Default.LocalPharmacy,
-                emoji = "💊",
                 accentColor = Color(0xFF512DA8),
                 labelText = "Care"
             )
             else -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFECEFF1), Color(0xFFCFD8DC))),
                 icon = Icons.Default.ShoppingBag,
-                emoji = "🛒",
                 accentColor = Color(0xFF455A64),
                 labelText = "Grocery"
             )
+        }
+    }
+
+    fun getProductDrawableRes(name: String, imageType: String): Int? {
+        val lower = "$name $imageType".lowercase()
+        return when {
+            // KOO Baked Beans in Tomato Sauce
+            lower.contains("koo") -> R.drawable.product_koo_beans
+            // Rhodes Baked Beans in Tomato Sauce
+            lower.contains("rhodes") && (lower.contains("bean") || lower.contains("baked")) -> R.drawable.product_rhodes_beans
+            // Baramakama Eggs Large 30's
+            lower.contains("baramakama") || (lower.contains("eggs") && (lower.contains("30") || lower.contains("tray"))) -> R.drawable.deal_baramakama_eggs
+            // Thokoman Peanut Butter Smooth
+            lower.contains("thokoman") || lower.contains("peanut butter") -> R.drawable.deal_thokoman
+            // Clover Full Cream Fresh Milk 2L
+            lower.contains("clover") && lower.contains("milk") -> R.drawable.product_clover_milk
+            // White Star Super Maize Meal 5kg
+            lower.contains("white star") || (lower.contains("maize") && lower.contains("super")) -> R.drawable.product_white_star_maize
+            else -> null
         }
     }
 }
@@ -212,16 +218,32 @@ fun ItemPicture(
     modifier: Modifier = Modifier
 ) {
     val theme = ProductVisuals.resolveTheme(itemName, category, imageType)
+    val specificDrawable = ProductVisuals.getProductDrawableRes(itemName, imageType)
+
+    val bgModifier = if (specificDrawable != null) {
+        Modifier.background(Color.White)
+    } else {
+        Modifier.background(theme.bgGradient)
+    }
 
     Box(
         modifier = modifier
             .size(size.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(theme.bgGradient)
-            .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(12.dp)),
+            .then(bgModifier)
+            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
-        if (imageUrl.isNotBlank()) {
+        if (specificDrawable != null) {
+            Image(
+                painter = painterResource(id = specificDrawable),
+                contentDescription = itemName,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(3.dp)
+            )
+        } else if (imageUrl.isNotBlank() && !imageUrl.contains("photo-1541592106381-b31e9677c0e5")) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(imageUrl)
@@ -234,16 +256,20 @@ fun ItemPicture(
                     .clip(RoundedCornerShape(12.dp))
             )
         } else {
-            // High-fidelity graphic product visual
+            // High-fidelity icon & label graphic product visual (no emojis)
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
                 modifier = Modifier.padding(2.dp)
             ) {
-                Text(
-                    text = theme.emoji,
-                    fontSize = size.fontSize.sp
+                Icon(
+                    imageVector = theme.icon,
+                    contentDescription = theme.labelText,
+                    tint = theme.accentColor,
+                    modifier = Modifier.size(size.iconSize)
                 )
                 if (size != PictureSize.SMALL) {
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = theme.labelText,
                         fontSize = 9.sp,

@@ -1,5 +1,8 @@
 package com.example.data.repository
 
+import android.content.Context
+import android.graphics.Bitmap
+import com.example.ai.AiCatalogueExtractor
 import com.example.data.local.AppDatabase
 import com.example.data.model.BudgetSettings
 import com.example.data.model.CatalogueItem
@@ -11,12 +14,19 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 
-class ShoppingRepository(private val db: AppDatabase) {
+class ShoppingRepository(
+    private val db: AppDatabase,
+    private val context: Context? = null
+) {
     private val storeDao = db.storeDao()
     private val catalogueItemDao = db.catalogueItemDao()
     private val shoppingListDao = db.shoppingListDao()
     private val loyaltyCardDao = db.loyaltyCardDao()
     private val budgetSettingsDao = db.budgetSettingsDao()
+
+    private val aiExtractor by lazy {
+        context?.let { AiCatalogueExtractor(it) }
+    }
 
     val allStores: Flow<List<Store>> = storeDao.getAllStores()
     val downloadedStores: Flow<List<Store>> = storeDao.getDownloadedStores()
@@ -45,11 +55,29 @@ class ShoppingRepository(private val db: AppDatabase) {
         loyaltyCardDao.getCardForStore(storeId)
 
     suspend fun initializeSeedDataIfNeeded() = withContext(Dispatchers.IO) {
-        val storeCount = storeDao.getCount()
-        if (storeCount == 0) {
-            val initialStores = SampleStoreData.stores
-            storeDao.insertStores(initialStores)
+        val existingStores = storeDao.getAllStores().firstOrNull() ?: emptyList()
+        val downloadedMap = existingStores.associate { it.id to (it.isDownloaded to it.downloadedAt) }
+        val updatedStores = SampleStoreData.stores.map { store ->
+            val prev = downloadedMap[store.id]
+            if (prev != null && prev.first) {
+                store.copy(isDownloaded = true, downloadedAt = prev.second)
+            } else {
+                store
+            }
+        }
+        storeDao.insertStores(updatedStores)
 
+        // Pre-seed items for ALL stores so every store shows its complete catalogue of products!
+        for (store in SampleStoreData.stores) {
+            val items = SampleStoreData.getCatalogueForStore(store.id)
+            if (items.isNotEmpty()) {
+                catalogueItemDao.insertItems(items)
+            }
+        }
+        catalogueItemDao.insertItems(SampleStoreData.featuredFlyerDeals)
+
+        val cardCount = loyaltyCardDao.getCount()
+        if (cardCount == 0) {
             // Seed initial South African loyalty cards
             val initialCards = listOf(
                 LoyaltyCard(
@@ -127,9 +155,74 @@ class ShoppingRepository(private val db: AppDatabase) {
         val items = SampleStoreData.getCatalogueForStore(storeId)
         catalogueItemDao.deleteItemsForStore(storeId)
         catalogueItemDao.insertItems(items)
+
+        // Automatically extract & enrich product images from the offline flyer download via AI
+        if (aiExtractor != null) {
+            try {
+                val aiItems = aiExtractor!!.extractAndEnrichCatalogueForStore(storeId, store.name)
+                if (aiItems.isNotEmpty()) {
+                    catalogueItemDao.insertItems(aiItems)
+                }
+            } catch (e: Exception) {
+                // Non-blocking fallback
+            }
+        }
+
+        val totalCount = catalogueItemDao.getCountForStore(storeId)
         storeDao.setStoreDownloaded(storeId, true, System.currentTimeMillis())
-        storeDao.updateStore(store.copy(isDownloaded = true, downloadedAt = System.currentTimeMillis(), totalItemsCount = items.size))
+        storeDao.updateStore(store.copy(isDownloaded = true, downloadedAt = System.currentTimeMillis(), totalItemsCount = totalCount))
         true
+    }
+
+    suspend fun extractAiImagesForStore(storeId: String): List<CatalogueItem> = withContext(Dispatchers.IO) {
+        val store = storeDao.getStoreById(storeId) ?: return@withContext emptyList()
+        val extractor = aiExtractor ?: return@withContext emptyList()
+        val aiItems = extractor.extractAndEnrichCatalogueForStore(storeId, store.name)
+        if (aiItems.isNotEmpty()) {
+            catalogueItemDao.insertItems(aiItems)
+            val currentCount = catalogueItemDao.getCountForStore(storeId)
+            storeDao.updateStore(store.copy(totalItemsCount = currentCount))
+        }
+        aiItems
+    }
+
+    suspend fun scanAndImportFlyerBitmap(
+        bitmap: Bitmap,
+        storeId: String
+    ): Result<List<CatalogueItem>> = withContext(Dispatchers.IO) {
+        val store = storeDao.getStoreById(storeId) ?: return@withContext Result.failure(Exception("Store not found"))
+        val extractor = aiExtractor ?: return@withContext Result.failure(Exception("AI Extractor not initialized"))
+        val geminiResult = extractor.extractFromFlyerBitmap(bitmap, storeId)
+        if (geminiResult.isSuccess) {
+            val result = geminiResult.getOrNull()!!
+            val newItems = result.products.mapIndexed { index, p ->
+                CatalogueItem(
+                    id = "ai_scan_${storeId}_${System.currentTimeMillis()}_$index",
+                    storeId = storeId,
+                    name = p.name,
+                    category = p.category,
+                    regularPrice = p.regularPrice,
+                    cardDiscountPrice = p.cardDiscountPrice,
+                    unit = p.unit,
+                    barcode = "6009${(300000 + index)}",
+                    inStock = true,
+                    promoTag = p.promoTag,
+                    isWeeklyDeal = true,
+                    loyaltyPointsMultiplier = 2,
+                    catalogueSource = "Gemini Flyer Vision",
+                    imageType = p.imageType,
+                    imageUrl = ""
+                )
+            }
+            if (newItems.isNotEmpty()) {
+                catalogueItemDao.insertItems(newItems)
+                val count = catalogueItemDao.getCountForStore(storeId)
+                storeDao.updateStore(store.copy(totalItemsCount = count, isDownloaded = true))
+            }
+            Result.success(newItems)
+        } else {
+            Result.failure(geminiResult.exceptionOrNull() ?: Exception("Failed to analyze flyer"))
+        }
     }
 
     suspend fun removeOfflineStoreCatalogue(storeId: String) = withContext(Dispatchers.IO) {
@@ -244,6 +337,23 @@ class ShoppingRepository(private val db: AppDatabase) {
         loyaltyCardDao.insertCard(card)
         if (card.isLinked) {
             refreshShoppingListPricesForStore(card.storeId, true)
+        }
+    }
+
+    suspend fun updateLoyaltyCard(card: LoyaltyCard) = withContext(Dispatchers.IO) {
+        loyaltyCardDao.updateCard(card)
+        if (card.isLinked) {
+            refreshShoppingListPricesForStore(card.storeId, true)
+        }
+    }
+
+    suspend fun ensureItemsLoadedForStore(storeId: String) = withContext(Dispatchers.IO) {
+        val count = catalogueItemDao.getCountForStore(storeId)
+        if (count == 0) {
+            val items = SampleStoreData.getCatalogueForStore(storeId)
+            if (items.isNotEmpty()) {
+                catalogueItemDao.insertItems(items)
+            }
         }
     }
 

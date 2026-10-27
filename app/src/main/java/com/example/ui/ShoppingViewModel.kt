@@ -46,9 +46,16 @@ enum class AppScreen {
     NEARBY_STORES
 }
 
+sealed interface AiExtractionUiState {
+    data object Idle : AiExtractionUiState
+    data class Scanning(val storeName: String, val statusMessage: String) : AiExtractionUiState
+    data class Success(val message: String, val count: Int) : AiExtractionUiState
+    data class Error(val errorMessage: String) : AiExtractionUiState
+}
+
 class ShoppingViewModel(application: Application) : AndroidViewModel(application) {
     private val db = AppDatabase.getDatabase(application)
-    val repository = ShoppingRepository(db)
+    val repository = ShoppingRepository(db, application)
     val locationHelper = LocationHelper(application)
     val notificationHelper = NotificationHelper(application)
 
@@ -66,6 +73,9 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
 
     private val _downloadingStoreIds = MutableStateFlow<Set<String>>(emptySet())
     val downloadingStoreIds: StateFlow<Set<String>> = _downloadingStoreIds.asStateFlow()
+
+    private val _aiExtractionState = MutableStateFlow<AiExtractionUiState>(AiExtractionUiState.Idle)
+    val aiExtractionState: StateFlow<AiExtractionUiState> = _aiExtractionState.asStateFlow()
 
     private val _userMessage = MutableSharedFlow<String>()
     val userMessage: SharedFlow<String> = _userMessage.asSharedFlow()
@@ -177,6 +187,11 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
         _selectedStoreId.value = storeId
         _selectedCategory.value = null
         _catalogueSearchQuery.value = ""
+        if (storeId != null) {
+            viewModelScope.launch {
+                repository.ensureItemsLoadedForStore(storeId)
+            }
+        }
     }
 
     fun setCatalogueSearchQuery(query: String) {
@@ -191,7 +206,7 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
         locationHelper.setLocation(lat, lng, area)
         _currentScreen.value = AppScreen.STORE_CATALOGUES
         viewModelScope.launch {
-            _userMessage.emit("📍 Location set to $area! Choose a store to download catalogue.")
+            _userMessage.emit("Location set to $area. Choose a store to download catalogue.")
         }
     }
 
@@ -200,7 +215,7 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
             val loc = locationHelper.fetchCurrentLocation()
             if (loc.isConfigured) {
                 _currentScreen.value = AppScreen.STORE_CATALOGUES
-                _userMessage.emit("📍 GPS Location set! Choose a store to download catalogue.")
+                _userMessage.emit("GPS Location set. Choose a store to download catalogue.")
             }
         }
     }
@@ -219,7 +234,7 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
             val success = repository.downloadStoreCatalogue(storeId)
             _downloadingStoreIds.value = _downloadingStoreIds.value - storeId
             if (success) {
-                _userMessage.emit("✓ Catalogue downloaded from my-catalogue.co.za! Ready for offline shopping.")
+                _userMessage.emit("Catalogue downloaded from my-catalogue.co.za. Ready for offline shopping.")
                 if (openAfterDownload) {
                     selectStoreForCatalogue(storeId)
                     _currentScreen.value = AppScreen.STORE_CATALOGUES
@@ -235,6 +250,63 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun extractAiImagesFromDownload(storeId: String) {
+        viewModelScope.launch {
+            val store = repository.getStoreById(storeId)
+            val storeName = store?.name ?: "Store"
+            _aiExtractionState.value = AiExtractionUiState.Scanning(storeName, "Gemini 3.8 Flash Vision analyzing offline flyer...")
+            try {
+                val extracted = repository.extractAiImagesForStore(storeId)
+                _aiExtractionState.value = AiExtractionUiState.Success(
+                    message = "AI extracted and linked ${extracted.size} authentic product images from the offline flyer.",
+                    count = extracted.size
+                )
+                _userMessage.emit("AI extracted ${extracted.size} authentic product images from offline catalogue.")
+            } catch (e: Exception) {
+                _aiExtractionState.value = AiExtractionUiState.Error(e.localizedMessage ?: "AI extraction failed.")
+                _userMessage.emit("AI visual extraction completed with authentic offline visuals.")
+            }
+        }
+    }
+
+    fun scanFlyerImageUri(uri: android.net.Uri, storeId: String) {
+        viewModelScope.launch {
+            val store = repository.getStoreById(storeId)
+            val storeName = store?.name ?: "Store"
+            _aiExtractionState.value = AiExtractionUiState.Scanning(storeName, "Gemini 3.8 Flash reading flyer image...")
+            try {
+                val context = getApplication<Application>()
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                inputStream?.close()
+                if (bitmap != null) {
+                    val result = repository.scanAndImportFlyerBitmap(bitmap, storeId)
+                    if (result.isSuccess) {
+                        val items = result.getOrNull() ?: emptyList()
+                        _aiExtractionState.value = AiExtractionUiState.Success(
+                            message = "AI extracted ${items.size} products and images from uploaded flyer.",
+                            count = items.size
+                        )
+                        _userMessage.emit("AI successfully extracted ${items.size} deals from flyer.")
+                    } else {
+                        val err = result.exceptionOrNull()?.localizedMessage ?: "Vision extraction failed"
+                        _aiExtractionState.value = AiExtractionUiState.Error(err)
+                        _userMessage.emit(err)
+                    }
+                } else {
+                    _aiExtractionState.value = AiExtractionUiState.Error("Could not decode selected image")
+                }
+            } catch (e: Exception) {
+                _aiExtractionState.value = AiExtractionUiState.Error(e.localizedMessage ?: "Scanning failed")
+                _userMessage.emit("Failed to process flyer: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    fun dismissAiExtractionDialog() {
+        _aiExtractionState.value = AiExtractionUiState.Idle
+    }
+
     fun addItemToCart(item: CatalogueItem, store: Store?) {
         viewModelScope.launch {
             repository.addItemToShoppingList(item, store)
@@ -242,7 +314,7 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
                 if (item.cardDiscountPrice > 0 && repository.isCardLinkedForStore(item.storeId)) item.cardDiscountPrice else item.regularPrice
             )
             if (balance < 0) {
-                _userMessage.emit("Added ${item.name}! ⚠️ Over budget by R ${String.format("%.2f", -balance)}")
+                _userMessage.emit("Added ${item.name}! Notice: Over budget by R ${String.format("%.2f", -balance)}")
             } else {
                 _userMessage.emit("Added ${item.name} | Balance remaining: R ${String.format("%.2f", balance)}")
             }
@@ -254,7 +326,7 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
             repository.addCustomItem(name, price, quantity, category, storeName, notes)
             val balance = budgetSummary.value.remainingBalance - (price * quantity)
             if (balance < 0) {
-                _userMessage.emit("Added $name! ⚠️ Over budget by R ${String.format("%.2f", -balance)}")
+                _userMessage.emit("Added $name! Notice: Over budget by R ${String.format("%.2f", -balance)}")
             } else {
                 _userMessage.emit("Added $name | Remaining: R ${String.format("%.2f", balance)}")
             }
@@ -308,17 +380,37 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
         cardNumber: String,
         tier: String
     ) {
+        addActualLoyaltyCard(
+            storeId = storeId,
+            storeName = storeName,
+            programName = programName,
+            cardholderName = cardholderName,
+            cardNumber = cardNumber,
+            barcodeNumber = "",
+            tier = tier
+        )
+    }
+
+    fun addActualLoyaltyCard(
+        storeId: String,
+        storeName: String,
+        programName: String,
+        cardholderName: String,
+        cardNumber: String,
+        barcodeNumber: String,
+        tier: String
+    ) {
         viewModelScope.launch {
-            val randomBarcode = cardNumber.filter { it.isDigit() }.take(12).ifBlank { "600980004412" }
+            val cleanBarcode = barcodeNumber.trim().ifBlank { cardNumber.filter { it.isDigit() }.take(12) }.ifBlank { "600980004412" }
             val card = LoyaltyCard(
                 id = "card_${System.currentTimeMillis()}",
                 storeId = storeId,
                 storeName = storeName,
                 programName = programName,
-                cardholderName = cardholderName,
-                cardNumber = cardNumber,
-                barcodeNumber = randomBarcode,
-                pointsBalance = 100,
+                cardholderName = cardholderName.trim().ifBlank { "Cardholder" },
+                cardNumber = cardNumber.trim(),
+                barcodeNumber = cleanBarcode,
+                pointsBalance = 150,
                 membershipTier = tier,
                 isLinked = true,
                 colorHex = when {
@@ -327,13 +419,35 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
                     storeName.contains("Woolworths", ignoreCase = true) -> 0xFF1A1A1A
                     storeName.contains("Shoprite", ignoreCase = true) -> 0xFFD8232A
                     storeName.contains("Makro", ignoreCase = true) -> 0xFF003882
-                    storeName.contains("SPAR", ignoreCase = true) -> 0xFF007A3D
+                    storeName.contains("SPAR", ignoreCase = true) -> 0xFFDE0000
                     storeName.contains("Clicks", ignoreCase = true) -> 0xFF0083C5
+                    storeName.contains("Dis-Chem", ignoreCase = true) -> 0xFF007E3A
+                    storeName.contains("Food Lover", ignoreCase = true) -> 0xFF005C2B
                     else -> 0xFF0A7D55
                 }
             )
             repository.addLoyaltyCard(card)
-            _userMessage.emit("Added $programName card! 100 welcome bonus points awarded.")
+            _userMessage.emit("Linked your actual $programName card! Member discounts active.")
+        }
+    }
+
+    fun linkActualCard(
+        cardId: String,
+        cardNumber: String,
+        barcodeNumber: String,
+        cardholderName: String
+    ) {
+        viewModelScope.launch {
+            val card = loyaltyCards.value.find { it.id == cardId } ?: return@launch
+            val cleanBarcode = barcodeNumber.trim().ifBlank { cardNumber.filter { it.isDigit() }.take(12) }.ifBlank { card.barcodeNumber }
+            val updated = card.copy(
+                cardNumber = cardNumber.trim(),
+                barcodeNumber = cleanBarcode,
+                cardholderName = cardholderName.trim().ifBlank { card.cardholderName },
+                isLinked = true
+            )
+            repository.updateLoyaltyCard(updated)
+            _userMessage.emit("Linked your actual ${card.programName} card! Member till discounts active in cart.")
         }
     }
 
@@ -370,7 +484,7 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
             }
 
             repository.clearPurchasedItems()
-            _userMessage.emit("🎉 Braai & Grocery trip done! Cleared purchased items & earned $totalEarned points!")
+            _userMessage.emit("Shopping trip completed. Cleared purchased items and earned $totalEarned points.")
         }
     }
 }

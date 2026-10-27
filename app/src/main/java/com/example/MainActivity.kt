@@ -67,6 +67,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.example.ai.configureAppCheck(this, intent)
         enableEdgeToEdge()
 
         // Handle intent from promotion notification
@@ -178,7 +179,7 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.padding(end = 12.dp)
                                     ) {
                                         Text(
-                                            text = "South Africa 🇿🇦",
+                                            text = "South Africa",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFF007A3D),
