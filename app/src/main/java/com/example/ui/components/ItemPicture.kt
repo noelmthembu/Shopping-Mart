@@ -28,6 +28,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,8 +67,21 @@ object ProductVisuals {
         val lower = "$name $category $imageType".lowercase()
 
         return when {
+            lower.contains("soya") || lower.contains("tofu") -> ProductVisualTheme(
+                bgGradient = Brush.linearGradient(listOf(Color(0xFFE8F5E9), Color(0xFFC8E6C9))),
+                icon = Icons.Default.Restaurant,
+                accentColor = Color(0xFF388E3C),
+                labelText = "Plant Protein"
+            )
+            lower.contains("steak") || lower.contains("ribeye") || lower.contains("rump") -> ProductVisualTheme(
+                bgGradient = Brush.linearGradient(listOf(Color(0xFFFFEBEE), Color(0xFFFFCDD2))),
+                icon = Icons.Default.OutdoorGrill,
+                accentColor = Color(0xFFD32F2F),
+                labelText = "Steak"
+            )
             // Milk & Dairy
-            lower.contains("milk") || lower.contains("dairy") || lower.contains("clover") || lower.contains("ayrshire") -> ProductVisualTheme(
+            lower.contains("milk") || lower.contains("dairy") || lower.contains("clover") || lower.contains("ayrshire") ||
+                lower.contains("yoghurt") || lower.contains("cheese") || lower.contains("butter") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFE1F5FE), Color(0xFFB3E5FC))),
                 icon = Icons.Default.Egg,
                 accentColor = Color(0xFF0288D1),
@@ -72,7 +89,7 @@ object ProductVisuals {
             )
             // Braai, Meat & Butchery
             lower.contains("boerewors") || lower.contains("braai") || lower.contains("meat") ||
-            lower.contains("chops") || lower.contains("mince") || lower.contains("beef") || lower.contains("butchery") -> ProductVisualTheme(
+            lower.contains("chops") || (lower.contains("mince") && !lower.contains("soya")) || lower.contains("beef") || lower.contains("butchery") -> ProductVisualTheme(
                 bgGradient = Brush.linearGradient(listOf(Color(0xFFFFEBEE), Color(0xFFFFCDD2))),
                 icon = Icons.Default.OutdoorGrill,
                 accentColor = Color(0xFFD32F2F),
@@ -191,17 +208,18 @@ object ProductVisuals {
         val lower = "$name $imageType".lowercase()
         return when {
             // KOO
-            lower.contains("koo") -> R.drawable.product_koo_beans
+            lower.contains("koo") && lower.contains("bean") -> R.drawable.product_koo_beans
             // Rhodes
-            lower.contains("rhodes") -> R.drawable.product_rhodes_beans
+            lower.contains("rhodes") && lower.contains("bean") -> R.drawable.product_rhodes_beans
             // Baramakama Eggs
-            lower.contains("baramakama") -> R.drawable.deal_baramakama_eggs
+            lower.contains("baramakama") && lower.contains("egg") -> R.drawable.deal_baramakama_eggs
             // Thokoman Peanut Butter
             lower.contains("thokoman") || lower.contains("peanut butter") -> R.drawable.deal_thokoman
-            // Clover Milk
-            lower.contains("clover") || (lower.contains("milk") && !lower.contains("coconut")) -> R.drawable.product_clover_milk
+            // Clover Milk (explicit milk products only)
+            lower.contains("clover") && lower.contains("milk") && !lower.contains("yoghurt") && !lower.contains("cheese") &&
+                !lower.contains("chocolate") && !lower.contains("juice") -> R.drawable.product_clover_milk
             // White Star Maize
-            lower.contains("white star") || lower.contains("maize") || lower.contains("mielie") -> R.drawable.product_white_star_maize
+            lower.contains("white star") || lower.contains("maize meal") || lower.contains("mielie") -> R.drawable.product_white_star_maize
             else -> null
         }
     }
@@ -219,6 +237,7 @@ fun ItemPicture(
 ) {
     val theme = ProductVisuals.resolveTheme(itemName, category, imageType)
     val specificDrawable = ProductVisuals.getProductDrawableRes(itemName, imageType)
+    var imageFailedToLoad by remember(itemName, imageUrl) { mutableStateOf(false) }
 
     val bgModifier = if (specificDrawable != null) {
         Modifier.background(Color.White)
@@ -243,7 +262,7 @@ fun ItemPicture(
                     .fillMaxSize()
                     .padding(3.dp)
             )
-        } else if (imageUrl.isNotBlank() && !imageUrl.contains("images.unsplash.com")) {
+        } else if (imageUrl.isNotBlank() && !imageUrl.contains("images.unsplash.com") && !imageFailedToLoad) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(imageUrl)
@@ -251,6 +270,8 @@ fun ItemPicture(
                     .build(),
                 contentDescription = itemName,
                 contentScale = ContentScale.Crop,
+                onError = { imageFailedToLoad = true },
+                onSuccess = { imageFailedToLoad = false },
                 modifier = Modifier
                     .size(size.dp)
                     .clip(RoundedCornerShape(12.dp))

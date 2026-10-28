@@ -230,7 +230,7 @@ fun StoreCard(
                             text = store.catalogueValidity,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF475569)
+                            color = if (store.catalogueValidity.contains("Expired", ignoreCase = true)) Color(0xFFB91C1C) else Color(0xFF475569)
                         )
                     }
                 }

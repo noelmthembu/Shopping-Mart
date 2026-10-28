@@ -54,7 +54,7 @@ object SampleStoreData {
             discountPercentForCardHolders = 15,
             promoBannerText = "Smart Shopper Summer Deals: Baramakama Eggs R64.99 + Double Points on Produce!",
             catalogueSource = "Sample data",
-            catalogueValidity = "Sample offers • verify in store",
+            catalogueValidity = "Expired 25 Oct 2026",
             isDownloaded = true,
             totalItemsCount = 22,
             brandColorHex = 0xFF002F6C
@@ -108,7 +108,7 @@ object SampleStoreData {
             discountPercentForCardHolders = 18,
             promoBannerText = "WRewards Quality Sale: Rotisserie Chicken R99.99 & Free Range Produce!",
             catalogueSource = "Sample data",
-            catalogueValidity = "Sample offers • verify in store",
+            catalogueValidity = "Expired 25 Oct 2026",
             isDownloaded = true,
             totalItemsCount = 17,
             brandColorHex = 0xFF1A1A1A

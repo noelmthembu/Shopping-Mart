@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.location.Location
 import androidx.core.content.ContextCompat
 import com.example.data.model.Store
@@ -15,6 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
+import java.util.Locale
 import kotlin.math.roundToInt
 
 data class UserLocation(
@@ -45,9 +48,14 @@ class LocationHelper(private val context: Context) {
         LocationServices.getFusedLocationProviderClient(context)
 
     companion object {
-        const val NEARBY_RADIUS_KM = 25.0
+        const val NEARBY_RADIUS_KM = 30.0
 
         val SA_POPULAR_PRESETS = listOf(
+            SouthAfricanAreaPreset("CBD", "Johannesburg, Gauteng", -26.2041, 28.0473),
+            SouthAfricanAreaPreset("Braamfontein", "Johannesburg, Gauteng", -26.1909, 28.0393),
+            SouthAfricanAreaPreset("Newtown", "Johannesburg, Gauteng", -26.2023, 28.0330),
+            SouthAfricanAreaPreset("Fordsburg", "Johannesburg, Gauteng", -26.2085, 28.0195),
+            SouthAfricanAreaPreset("Mayfair", "Johannesburg, Gauteng", -26.2050, 28.0180),
             SouthAfricanAreaPreset("Sandton City", "Johannesburg, Gauteng", -26.1076, 28.0567),
             SouthAfricanAreaPreset("Rosebank Mall", "Johannesburg, Gauteng", -26.1465, 28.0416),
             SouthAfricanAreaPreset("V&A Waterfront", "Cape Town, Western Cape", -33.9048, 18.4215),
@@ -107,6 +115,19 @@ class LocationHelper(private val context: Context) {
         return fine || coarse
     }
 
+    private fun resolveAreaName(latitude: Double, longitude: Double): String {
+        return try {
+            if (!Geocoder.isPresent()) return "Current GPS Location"
+            val geocoder = Geocoder(context, Locale("en", "ZA"))
+            val addresses = geocoder.getFromLocation(latitude, longitude, 1)
+            val address = addresses?.firstOrNull()
+            val suburb = address?.subLocality ?: address?.locality ?: address?.featureName
+            suburb?.takeIf { it.isNotBlank() } ?: "Current GPS Location"
+        } catch (_: Exception) {
+            "Current GPS Location"
+        }
+    }
+
     @SuppressLint("MissingPermission")
     suspend fun fetchCurrentLocation(): UserLocation {
         if (!hasLocationPermission()) {
@@ -125,27 +146,30 @@ class LocationHelper(private val context: Context) {
             } else {
                 Priority.PRIORITY_BALANCED_POWER_ACCURACY
             }
-            val location: Location? = fusedClient.getCurrentLocation(
-                priority,
-                cts.token
-            ).await()
 
-            if (location != null) {
+            val freshLocation: Location? = withTimeout(10_000L) {
+                fusedClient.getCurrentLocation(priority, cts.token).await()
+            }
+            val lastKnown = fusedClient.lastLocation.await()
+            val chosen = freshLocation ?: lastKnown
+
+            if (chosen != null) {
+                val areaName = resolveAreaName(chosen.latitude, chosen.longitude)
                 val loc = UserLocation(
-                    latitude = location.latitude,
-                    longitude = location.longitude,
+                    latitude = chosen.latitude,
+                    longitude = chosen.longitude,
                     isSimulated = false,
-                    accuracyMeters = location.accuracy,
-                    areaName = "Current GPS Location",
+                    accuracyMeters = chosen.accuracy.takeIf { it > 0f } ?: 50f,
+                    areaName = areaName,
                     isConfigured = true
                 )
                 _currentLocation.value = loc
                 loc
             } else {
-                _currentLocation.value
+                _currentLocation.value.copy(areaName = "GPS fix unavailable")
             }
-        } catch (e: Exception) {
-            _currentLocation.value
+        } catch (_: Exception) {
+            _currentLocation.value.copy(areaName = "GPS fix unavailable")
         }
     }
 

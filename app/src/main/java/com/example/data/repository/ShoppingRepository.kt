@@ -74,7 +74,7 @@ class ShoppingRepository(
                 catalogueItemDao.insertItems(items)
             }
         }
-        catalogueItemDao.insertItems(SampleStoreData.featuredFlyerDeals)
+        catalogueItemDao.insertItems(SampleStoreData.featuredFlyerDeals.distinctBy { "${it.storeId}:${it.name}" })
 
         val cardCount = loyaltyCardDao.getCount()
         if (cardCount == 0) {
@@ -83,7 +83,7 @@ class ShoppingRepository(
                 LoyaltyCard(
                     id = "card_checkers",
                     storeId = "checkers_01",
-                    storeName = "Checkers Hyper Sandton",
+                    storeName = "Checkers Hyper Fordsburg",
                     programName = "Xtra Savings",
                     cardholderName = "Sipho Dlamini",
                     cardNumber = "9820 4410 7731 0029",
@@ -96,7 +96,7 @@ class ShoppingRepository(
                 LoyaltyCard(
                     id = "card_pnp",
                     storeId = "pnp_02",
-                    storeName = "Pick n Pay Rosebank",
+                    storeName = "Pick n Pay Newtown Junction",
                     programName = "Smart Shopper",
                     cardholderName = "Sipho Dlamini",
                     cardNumber = "4401 9832 1190 5543",
@@ -109,7 +109,7 @@ class ShoppingRepository(
                 LoyaltyCard(
                     id = "card_woolies",
                     storeId = "woolworths_03",
-                    storeName = "Woolworths Food Hyde Park",
+                    storeName = "Woolworths Food Rosebank",
                     programName = "WRewards",
                     cardholderName = "Sipho Dlamini",
                     cardNumber = "8890 1204 3392 4110",
@@ -122,7 +122,7 @@ class ShoppingRepository(
                 LoyaltyCard(
                     id = "card_clicks",
                     storeId = "clicks_07",
-                    storeName = "Clicks Sandton City",
+                    storeName = "Clicks Rosebank Mall",
                     programName = "ClubCard",
                     cardholderName = "Sipho Dlamini",
                     cardNumber = "6007 1928 3341 9901",
