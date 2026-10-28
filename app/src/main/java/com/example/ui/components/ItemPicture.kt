@@ -52,7 +52,8 @@ import com.example.R
 enum class PictureSize(val dp: Dp, val iconSize: Dp, val fontSize: Float) {
     SMALL(46.dp, 22.dp, 18f),
     MEDIUM(64.dp, 30.dp, 26f),
-    LARGE(80.dp, 38.dp, 34f)
+    LARGE(80.dp, 38.dp, 34f),
+    EXTRA_LARGE(112.dp, 52.dp, 44f)
 }
 
 data class ProductVisualTheme(
@@ -62,7 +63,37 @@ data class ProductVisualTheme(
     val labelText: String
 )
 
+data class ProductBrandMark(val name: String, val color: Color)
+
 object ProductVisuals {
+    fun resolveBrand(name: String, imageType: String): ProductBrandMark? {
+        val lower = "$name $imageType".lowercase()
+        return when {
+            lower.contains("head & shoulders") || lower.contains("head and shoulders") -> ProductBrandMark("Head & Shoulders", Color(0xFF174A8B))
+            lower.contains("johnson's") || lower.contains("johnsons") -> ProductBrandMark("Johnson's", Color(0xFFDB6B91))
+            lower.contains("maybelline") -> ProductBrandMark("MAYBELLINE", Color(0xFF111111))
+            lower.contains("clover") -> ProductBrandMark("Clover", Color(0xFFD8232A))
+            lower.contains("clicks") -> ProductBrandMark("Clicks", Color(0xFF0083C5))
+            lower.contains("thokoman") -> ProductBrandMark("Thokoman", Color(0xFF7A3E24))
+            lower.contains("baramakama") -> ProductBrandMark("Baramakama", Color(0xFFB91C1C))
+            lower.contains("white star") -> ProductBrandMark("WHITE STAR", Color(0xFF174A8B))
+            lower.contains("koo") -> ProductBrandMark("KOO", Color(0xFFCA2027))
+            lower.contains("rhodes") -> ProductBrandMark("Rhodes", Color(0xFFB91C1C))
+            lower.contains("spekko") -> ProductBrandMark("Spekko", Color(0xFF23613B))
+            lower.contains("tastic") -> ProductBrandMark("Tastic", Color(0xFF174A8B))
+            lower.contains("kellogg") -> ProductBrandMark("Kellogg's", Color(0xFFD8232A))
+            lower.contains("albany") -> ProductBrandMark("Albany", Color(0xFF174A8B))
+            lower.contains("nescafé") || lower.contains("nescafe") -> ProductBrandMark("Nescafé", Color(0xFF6D3826))
+            lower.contains("coca-cola") || lower.contains("coke") -> ProductBrandMark("Coca-Cola", Color(0xFFD8232A))
+            lower.contains("simba") -> ProductBrandMark("Simba", Color(0xFFE47819))
+            lower.contains("cadbury") -> ProductBrandMark("Cadbury", Color(0xFF512DA8))
+            lower.contains("colgate") -> ProductBrandMark("Colgate", Color(0xFFD8232A))
+            lower.contains("sunlight") -> ProductBrandMark("Sunlight", Color(0xFFE6A700))
+            lower.contains("omo") -> ProductBrandMark("OMO", Color(0xFF174A8B))
+            else -> null
+        }
+    }
+
     fun resolveTheme(name: String, category: String, imageType: String): ProductVisualTheme {
         val lower = "$name $category $imageType".lowercase()
 
@@ -213,11 +244,6 @@ object ProductVisuals {
             lower.contains("rhodes") && lower.contains("bean") -> R.drawable.product_rhodes_beans
             // Baramakama Eggs
             lower.contains("baramakama") && lower.contains("egg") -> R.drawable.deal_baramakama_eggs
-            // Thokoman Peanut Butter
-            lower.contains("thokoman") || lower.contains("peanut butter") -> R.drawable.deal_thokoman
-            // Clover Milk (explicit milk products only)
-            lower.contains("clover") && lower.contains("milk") && !lower.contains("yoghurt") && !lower.contains("cheese") &&
-                !lower.contains("chocolate") && !lower.contains("juice") -> R.drawable.product_clover_milk
             // White Star Maize
             lower.contains("white star") || lower.contains("maize meal") || lower.contains("mielie") -> R.drawable.product_white_star_maize
             else -> null
@@ -237,9 +263,10 @@ fun ItemPicture(
 ) {
     val theme = ProductVisuals.resolveTheme(itemName, category, imageType)
     val specificDrawable = ProductVisuals.getProductDrawableRes(itemName, imageType)
+    val brandMark = ProductVisuals.resolveBrand(itemName, imageType)
     var imageFailedToLoad by remember(itemName, imageUrl) { mutableStateOf(false) }
 
-    val bgModifier = if (specificDrawable != null) {
+    val bgModifier = if (specificDrawable != null || brandMark != null) {
         Modifier.background(Color.White)
     } else {
         Modifier.background(theme.bgGradient)
@@ -261,6 +288,22 @@ fun ItemPicture(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(3.dp)
+            )
+        } else if (brandMark != null) {
+            Text(
+                text = brandMark.name,
+                color = brandMark.color,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = when {
+                    brandMark.name.length > 12 -> 10.sp
+                    size == PictureSize.SMALL -> 10.sp
+                    size == PictureSize.MEDIUM -> 13.sp
+                    size == PictureSize.EXTRA_LARGE -> 18.sp
+                    else -> 16.sp
+                },
+                maxLines = 2,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 4.dp)
             )
         } else if (imageUrl.isNotBlank() && !imageUrl.contains("images.unsplash.com") && !imageFailedToLoad) {
             AsyncImage(

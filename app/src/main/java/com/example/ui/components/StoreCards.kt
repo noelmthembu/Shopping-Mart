@@ -45,7 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -53,8 +52,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.example.R
 import com.example.data.model.CatalogueItem
 import com.example.data.model.Store
@@ -474,35 +471,13 @@ fun FlyerDealGridCard(
                     .background(Color(0xFFF8FAFC)),
                 contentAlignment = Alignment.Center
             ) {
-                val specificDrawable = ProductVisuals.getProductDrawableRes(item.name, item.imageType)
-                if (specificDrawable != null) {
-                    Image(
-                        painter = painterResource(id = specificDrawable),
-                        contentDescription = item.name,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(4.dp)
-                    )
-                } else if (item.imageUrl.isNotBlank() && !item.imageUrl.contains("images.unsplash.com")) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(item.imageUrl)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = item.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    ItemPicture(
-                        itemName = item.name,
-                        category = item.category,
-                        imageType = item.imageType,
-                        imageUrl = item.imageUrl,
-                        size = PictureSize.LARGE
-                    )
-                }
+                ItemPicture(
+                    itemName = item.name,
+                    category = item.category,
+                    imageType = item.imageType,
+                    imageUrl = item.imageUrl,
+                    size = PictureSize.EXTRA_LARGE
+                )
 
                 // Promotional Megaphone / Sticker Badge
                 if (!isEggsDeal && item.promoTag.isNotBlank()) {
@@ -612,35 +587,13 @@ fun CatalogueItemCard(
                     .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                val specificDrawable = ProductVisuals.getProductDrawableRes(item.name, item.imageType)
-                if (specificDrawable != null) {
-                    Image(
-                        painter = painterResource(id = specificDrawable),
-                        contentDescription = item.name,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(4.dp)
-                    )
-                } else if (item.imageUrl.isNotBlank() && !item.imageUrl.contains("images.unsplash.com")) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(item.imageUrl)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = item.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    ItemPicture(
-                        itemName = item.name,
-                        category = item.category,
-                        imageType = item.imageType,
-                        imageUrl = item.imageUrl,
-                        size = PictureSize.MEDIUM
-                    )
-                }
+                ItemPicture(
+                    itemName = item.name,
+                    category = item.category,
+                    imageType = item.imageType,
+                    imageUrl = item.imageUrl,
+                    size = PictureSize.MEDIUM
+                )
             }
 
             Spacer(modifier = Modifier.width(12.dp))

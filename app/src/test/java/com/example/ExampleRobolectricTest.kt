@@ -86,6 +86,12 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun `branded products use their brand mark without misbranding generic milk`() {
+        assertEquals("Clover", ProductVisuals.resolveBrand("Clover Full Cream Milk 1L", "milk")?.name)
+        assertNull(ProductVisuals.resolveBrand("Full Cream Milk 1L", "milk"))
+    }
+
+    @Test
     fun `south african budget remaining balance calculation with Xtra Savings`() {
         val budgetRands = 1500.00
         val items = listOf(
