@@ -21,7 +21,7 @@ data class UserLocation(
     val latitude: Double,
     val longitude: Double,
     val isSimulated: Boolean = false,
-    val accuracyMeters: Float = 10f,
+    val accuracyMeters: Float = 0f,
     val areaName: String = "",
     val isConfigured: Boolean = false
 )
@@ -45,6 +45,8 @@ class LocationHelper(private val context: Context) {
         LocationServices.getFusedLocationProviderClient(context)
 
     companion object {
+        const val NEARBY_RADIUS_KM = 25.0
+
         val SA_POPULAR_PRESETS = listOf(
             SouthAfricanAreaPreset("Sandton City", "Johannesburg, Gauteng", -26.1076, 28.0567),
             SouthAfricanAreaPreset("Rosebank Mall", "Johannesburg, Gauteng", -26.1465, 28.0416),
@@ -65,12 +67,26 @@ class LocationHelper(private val context: Context) {
             SouthAfricanAreaPreset("Melville", "Johannesburg, Gauteng", -26.1741, 28.0094),
             SouthAfricanAreaPreset("Bedfordcentre", "Bedfordview, Gauteng", -26.1834, 28.1345)
         )
+
+        fun findPreset(query: String): SouthAfricanAreaPreset? {
+            val normalizedQuery = query.trim().replace(Regex("\\s+"), " ").lowercase()
+            if (normalizedQuery.isBlank()) return null
+
+            val nameMatch = SA_POPULAR_PRESETS.singleOrNull {
+                it.name.trim().replace(Regex("\\s+"), " ").lowercase() == normalizedQuery
+            }
+            if (nameMatch != null) return nameMatch
+
+            return SA_POPULAR_PRESETS
+                .filter { it.cityOrRegion.trim().replace(Regex("\\s+"), " ").lowercase() == normalizedQuery }
+                .singleOrNull()
+        }
     }
 
     private val _currentLocation = MutableStateFlow(
         UserLocation(
-            latitude = -26.1076,
-            longitude = 28.0567,
+            latitude = 0.0,
+            longitude = 0.0,
             isSimulated = true,
             areaName = "",
             isConfigured = false // Starts NOT configured as requested
@@ -98,8 +114,18 @@ class LocationHelper(private val context: Context) {
 
         return try {
             val cts = CancellationTokenSource()
+            val priority = if (
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                Priority.PRIORITY_HIGH_ACCURACY
+            } else {
+                Priority.PRIORITY_BALANCED_POWER_ACCURACY
+            }
             val location: Location? = fusedClient.getCurrentLocation(
-                Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                priority,
                 cts.token
             ).await()
 
@@ -153,7 +179,7 @@ class LocationHelper(private val context: Context) {
                 store = store,
                 distanceKm = km,
                 distanceFormatted = formatted,
-                isNearby = km <= 3.0
+                isNearby = km <= NEARBY_RADIUS_KM
             )
         }.sortedBy { it.distanceKm }
     }
