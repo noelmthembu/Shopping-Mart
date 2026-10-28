@@ -219,7 +219,7 @@ object SampleStoreData {
             isWeeklyDeal = true,
             loyaltyPointsMultiplier = 2,
             imageType = "peanut_butter",
-            imageUrl = "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=600&q=80"
+            imageUrl = ""
         ),
         CatalogueItem(
             id = "deal_spekko_03",
@@ -235,7 +235,7 @@ object SampleStoreData {
             isWeeklyDeal = true,
             loyaltyPointsMultiplier = 2,
             imageType = "rice",
-            imageUrl = "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80"
+            imageUrl = ""
         ),
         CatalogueItem(
             id = "deal_rhodes_04",
@@ -301,7 +301,7 @@ object SampleStoreData {
             imageType = "koo_beans",
             imageUrl = ""
         )
-    )
+    ).distinctBy { "${it.storeId}:${it.name}" }
 
     fun getCatalogueForStore(storeId: String): List<CatalogueItem> {
         return when (storeId) {
@@ -312,12 +312,12 @@ object SampleStoreData {
                 CatalogueItem("shp_rhodes", storeId, "Rhodes Baked Beans in Tomato Sauce 400g", "Pantry & Staples", 17.99, 14.99, "400g Tin", "6009000196", true, "HOT SPECIAL", true, 1, imageType = "rhodes_beans", imageUrl = ""),
                 CatalogueItem("shp_kellogg", storeId, "Kellogg's Corn Flakes 1kg", "Breakfast Cereals", 79.99, 64.99, "1 kg Box", "6009000195", true, "ORIGINAL & BEST", true, 2, imageType = "cereal", imageUrl = "https://images.unsplash.com/photo-1521483451571-c0ebd0023a59?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("shp_01", storeId, "White Star Super Maize Meal 5kg", "Pantry & Staples", 79.99, 68.99, "5 kg Bag", "6009000101", true, "The Clever Choice", true, 2, imageType = "white_star", imageUrl = ""),
-                CatalogueItem("shp_02", storeId, "Huletts SunSweet White Sugar 2.5kg", "Pantry & Staples", 54.99, 46.99, "2.5 kg", "6009000102", true, "Pure Cane Sugar", false, 1, imageType = "sugar", imageUrl = "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80"),
-                CatalogueItem("shp_03", storeId, "Top Class Soya Mince Spice Mix 500g", "Pantry & Staples", 26.99, 21.99, "500g", "6009000103", true, "Rich Meaty Taste", false, 1, imageType = "mince", imageUrl = "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80"),
+                CatalogueItem("shp_02", storeId, "Huletts SunSweet White Sugar 2.5kg", "Pantry & Staples", 54.99, 46.99, "2.5 kg", "6009000102", true, "Pure Cane Sugar", false, 1, imageType = "sugar", imageUrl = ""),
+                CatalogueItem("shp_03", storeId, "Top Class Soya Mince Spice Mix 500g", "Pantry & Staples", 26.99, 21.99, "500g", "6009000103", true, "Rich Meaty Taste", false, 1, imageType = "soya_mince", imageUrl = ""),
                 CatalogueItem("shp_04", storeId, "Ritebrand Long Life Full Cream Milk 6x1L", "Dairy & Eggs", 99.99, 84.99, "6x1L Box", "6009000104", true, "Bulk Value Pack", true, 3, imageType = "milk", imageUrl = "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("shp_06", storeId, "Sunfoil Pure Sunflower Cooking Oil 2L", "Pantry & Staples", 74.99, 62.99, "2 Litre", "6009000106", true, "Triple Refined", true, 2, imageType = "oil", imageUrl = "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("shp_07", storeId, "Lucky Star Pilchards in Tomato Sauce 400g", "Pantry & Staples", 28.99, 23.99, "400g Tin", "6009000107", true, "Omega 3 High Protein", false, 1, imageType = "fish", imageUrl = ""),
-                CatalogueItem("shp_08", storeId, "Golden Cloud Cake Flour 2.5kg", "Bakery & Bread", 42.99, 35.99, "2.5 kg", "6009000108", true, "Soft & Fine", false, 1, imageType = "flour", imageUrl = "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80"),
+                CatalogueItem("shp_08", storeId, "Golden Cloud Cake Flour 2.5kg", "Bakery & Bread", 42.99, 35.99, "2.5 kg", "6009000108", true, "Soft & Fine", false, 1, imageType = "flour", imageUrl = ""),
                 CatalogueItem("shp_10", storeId, "MAQ Washing Powder Handwash 2kg", "Household & Cleaning", 64.99, 52.99, "2 kg", "6009000110", true, "Shine Power", false, 2, imageType = "cleaning", imageUrl = "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("shp_11", storeId, "Goldi Mixed Chicken Portions 4kg", "Meat & Butchery", 159.99, 139.99, "4 kg Bag", "6009000111", true, "Family Braai Size", true, 3, imageType = "chicken", imageUrl = "https://images.unsplash.com/photo-1587593810167-a84920ea0781?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("shp_12", storeId, "Albany Superior Thick White Bread 700g", "Bakery & Bread", 18.99, 16.49, "700g loaf", "6009000112", true, "Freshly Baked Daily", false, 1, imageType = "bread", imageUrl = "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80"),
@@ -348,15 +348,15 @@ object SampleStoreData {
                 CatalogueItem("chk_13", storeId, "Fresh South African Hass Avocados (4pk)", "Fresh Produce", 39.99, 29.99, "4 pack", "6001234013", true, "Ripe & Ready R10 Off", true, 2, imageType = "avocado", imageUrl = "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("chk_14", storeId, "Tender Pork Loin Chops Braai Pack 1kg", "Meat & Butchery", 94.99, 79.99, "per kg", "6001234014", true, "Butcher's Choice", true, 2, imageType = "chops", imageUrl = "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("chk_17", storeId, "Tastic Parboiled White Rice 2kg", "Pantry & Staples", 46.99, 38.99, "2 kg", "6001234017", true, "Cooks Fluffy", false, 1, imageType = "rice", imageUrl = "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80"),
-                CatalogueItem("chk_18", storeId, "Lancewood Sweet Cheddar Cheese 350g", "Dairy & Eggs", 59.99, 49.99, "350g block", "6001234018", true, "Xtra Savings R10 Off", true, 2, imageType = "butter", imageUrl = "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?auto=format&fit=crop&w=600&q=80"),
-                CatalogueItem("chk_19", storeId, "Danone Nutriday Yoghurt Multipack 6x100g", "Dairy & Eggs", 23.99, 18.99, "6 pack", "6001234019", true, "Smooth Fruit Yoghurt", false, 1, imageType = "milk", imageUrl = "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=600&q=80"),
+                CatalogueItem("chk_18", storeId, "Lancewood Sweet Cheddar Cheese 350g", "Dairy & Eggs", 59.99, 49.99, "350g block", "6001234018", true, "Xtra Savings R10 Off", true, 2, imageType = "cheese", imageUrl = ""),
+                CatalogueItem("chk_19", storeId, "Danone Nutriday Yoghurt Multipack 6x100g", "Dairy & Eggs", 23.99, 18.99, "6 pack", "6001234019", true, "Smooth Fruit Yoghurt", false, 1, imageType = "yoghurt", imageUrl = ""),
                 CatalogueItem("chk_20", storeId, "Farmer's Deli Smoked Back Bacon 200g", "Meat & Butchery", 39.99, 32.99, "200g pack", "6001234020", true, "Woodsmoke Cured", true, 2, imageType = "chops", imageUrl = "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("chk_21", storeId, "Jacobs Krönung Gold Coffee 200g", "Beverages", 154.99, 129.99, "200g jar", "6001234021", true, "Save R25 with Card", true, 3, imageType = "coffee", imageUrl = "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("chk_22", storeId, "Handy Andy All-in-One Cleaner 750ml", "Household & Cleaning", 32.99, 26.99, "750ml", "6001234022", true, "100% Dirt Removal", false, 1, imageType = "cleaning", imageUrl = "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("chk_23", storeId, "Sunlight Lemon Dishwashing Liquid 750ml", "Household & Cleaning", 34.99, 28.99, "750ml", "6001234023", true, "Power of 100 Lemons", false, 1, imageType = "sunlight", imageUrl = "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("chk_24", storeId, "Fresh Sweet Bananas 1.2kg Bag", "Fresh Produce", 24.99, 19.99, "1.2 kg", "6001234024", true, "High in Potassium", false, 1, imageType = "fruit", imageUrl = "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("chk_25", storeId, "Baby Soft 2-Ply Toilet Rolls (9 pack)", "Household & Cleaning", 94.99, 79.99, "9 rolls", "6001234025", true, "Soft & Thick", true, 2, imageType = "toiletpaper", imageUrl = "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=600&q=80"),
-                CatalogueItem("chk_26", storeId, "Prime Aged Beef Ribeye Steak 500g", "Meat & Butchery", 109.99, 89.99, "500g tray", "6001234026", true, "Master Butcher Grade", true, 3, imageType = "boerewors", imageUrl = "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80")
+                CatalogueItem("chk_26", storeId, "Prime Aged Beef Ribeye Steak 500g", "Meat & Butchery", 109.99, 89.99, "500g tray", "6001234026", true, "Master Butcher Grade", true, 3, imageType = "steak", imageUrl = "")
             )
 
             "pnp_02" -> listOf(
@@ -508,7 +508,7 @@ object SampleStoreData {
                 CatalogueItem("gam_eggs", storeId, "Baramakama Eggs Large 30's", "Dairy & Eggs", 79.99, 64.99, "30's Tray", "6002200099", true, "BUY ME TO ENTER • WIN A CAR", true, 3, imageType = "baramakama_eggs", imageUrl = ""),
                 CatalogueItem("gam_01", storeId, "Sunlight 2in1 Washing Powder 5kg Mega", "Household & Cleaning", 169.99, 139.99, "5 kg", "6002200001", true, "Beat That Price", true, 3, imageType = "cleaning", imageUrl = "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("gam_02", storeId, "Russell Hobbs Cordless Kettle 1.7L", "Pantry & Staples", 399.99, 329.99, "each", "6002200002", true, "Price Guarantee", true, 4, imageType = "coffee", imageUrl = "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80"),
-                CatalogueItem("gam_03", storeId, "Defy 20L Solo Microwave Oven Silver", "Household & Cleaning", 1199.99, 999.99, "unit", "6002200003", true, "Save R200 Game Deal", true, 5, imageType = "cleaning", imageUrl = "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?auto=format&fit=crop&w=600&q=80"),
+                CatalogueItem("gam_03", storeId, "Defy 20L Solo Microwave Oven Silver", "Household & Cleaning", 1199.99, 999.99, "unit", "6002200003", true, "Save R200 Game Deal", true, 5, imageType = "microwave", imageUrl = ""),
                 CatalogueItem("gam_04", storeId, "Coca-Cola 2L 6-Bottle Shrink Bundle", "Beverages", 149.99, 129.99, "6 pack", "6002200004", true, "Bulk Refreshment", true, 3, imageType = "coke", imageUrl = "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("gam_05", storeId, "Simba Potato Chips 120g Party 4-Pack", "Snacks & Treats", 69.99, 59.99, "4 pack", "6002200005", true, "Roarrrs Party Deal", false, 1, imageType = "simba", imageUrl = "https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=600&q=80"),
                 CatalogueItem("gam_06", storeId, "Ariel Auto Washing Liquid 2L Bottle", "Household & Cleaning", 119.99, 99.99, "2 Litre", "6002200006", true, "Best Clean in 1 Wash", true, 2, imageType = "omo", imageUrl = "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?auto=format&fit=crop&w=600&q=80"),

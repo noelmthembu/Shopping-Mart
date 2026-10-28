@@ -61,19 +61,17 @@ import com.example.data.model.Store
 
 @Composable
 fun StoreBrandBadge(store: Store, modifier: Modifier = Modifier) {
-    val logoResId = when {
-        store.name.contains("Checkers", ignoreCase = true) || store.chain.contains("Checkers", ignoreCase = true) -> R.drawable.logo_checkers
-        store.name.contains("Pick n Pay", ignoreCase = true) || store.chain.contains("Pick n Pay", ignoreCase = true) -> R.drawable.logo_pnp
-        store.name.contains("Shoprite", ignoreCase = true) || store.chain.contains("Shoprite", ignoreCase = true) -> R.drawable.logo_shoprite
-        store.name.contains("Makro", ignoreCase = true) || store.chain.contains("Makro", ignoreCase = true) -> R.drawable.logo_makro
-        store.name.contains("SPAR", ignoreCase = true) || store.chain.contains("SPAR", ignoreCase = true) -> R.drawable.logo_spar
-        store.name.contains("Woolworths", ignoreCase = true) || store.chain.contains("Woolworths", ignoreCase = true) -> R.drawable.logo_woolworths
-        store.name.contains("Food Lover", ignoreCase = true) || store.chain.contains("Food Lover", ignoreCase = true) -> R.drawable.logo_foodlovers
-        store.name.contains("Dis-Chem", ignoreCase = true) || store.chain.contains("Dis-Chem", ignoreCase = true) -> R.drawable.logo_dischem
-        store.name.contains("Clicks", ignoreCase = true) || store.chain.contains("Clicks", ignoreCase = true) -> R.drawable.logo_clicks
-        store.name.contains("Game", ignoreCase = true) || store.chain.contains("Game", ignoreCase = true) -> R.drawable.logo_game
-        store.name.contains("PEP", ignoreCase = true) || store.chain.contains("PEP", ignoreCase = true) -> R.drawable.logo_pep
-        store.name.contains("Builders", ignoreCase = true) || store.chain.contains("Builders", ignoreCase = true) -> R.drawable.logo_builders
+    val logoResId = when (store.id) {
+        "shoprite_04" -> R.drawable.logo_shoprite
+        "checkers_01" -> R.drawable.logo_checkers
+        "pnp_02" -> R.drawable.logo_pnp
+        "spar_06" -> R.drawable.logo_spar
+        "makro_05" -> R.drawable.logo_makro
+        "woolworths_03" -> R.drawable.logo_woolworths
+        "foodlovers_08" -> R.drawable.logo_foodlovers
+        "dischem_09" -> R.drawable.logo_dischem
+        "clicks_07" -> R.drawable.logo_clicks
+        "game_10" -> R.drawable.logo_game
         else -> null
     }
 
@@ -98,8 +96,9 @@ fun StoreBrandBadge(store: Store, modifier: Modifier = Modifier) {
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
+                val initials = store.name.split(" ").take(2).joinToString("") { it.firstOrNull()?.uppercaseChar()?.toString() ?: "" }
                 Text(
-                    text = store.name.take(8),
+                    text = initials.ifBlank { store.name.take(2) }.uppercase(),
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp,
                     color = Color(0xFF007A3D)
