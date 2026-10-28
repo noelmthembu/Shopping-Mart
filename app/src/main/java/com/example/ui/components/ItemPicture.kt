@@ -195,7 +195,7 @@ object ProductVisuals {
             // Rhodes
             lower.contains("rhodes") -> R.drawable.product_rhodes_beans
             // Baramakama Eggs
-            lower.contains("baramakama") || lower.contains("egg") -> R.drawable.deal_baramakama_eggs
+            lower.contains("baramakama") -> R.drawable.deal_baramakama_eggs
             // Thokoman Peanut Butter
             lower.contains("thokoman") || lower.contains("peanut butter") -> R.drawable.deal_thokoman
             // Clover Milk
@@ -243,7 +243,7 @@ fun ItemPicture(
                     .fillMaxSize()
                     .padding(3.dp)
             )
-        } else if (imageUrl.isNotBlank() && !imageUrl.contains("photo-1541592106381-b31e9677c0e5")) {
+        } else if (imageUrl.isNotBlank() && !imageUrl.contains("images.unsplash.com")) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(imageUrl)

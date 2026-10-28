@@ -57,6 +57,7 @@ fun LocationSetupCard(
     modifier: Modifier = Modifier
 ) {
     var customSearchText by remember { mutableStateOf("") }
+    var searchError by remember { mutableStateOf<String?>(null) }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -125,7 +126,7 @@ fun LocationSetupCard(
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Enter your suburb or detect GPS to view current store catalogues and specials around you from my-catalogue.co.za.",
+                text = "Choose a listed area or use GPS to estimate distances to the sample store locations.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
             )
@@ -160,7 +161,10 @@ fun LocationSetupCard(
             ) {
                 OutlinedTextField(
                     value = customSearchText,
-                    onValueChange = { customSearchText = it },
+                    onValueChange = {
+                        customSearchText = it
+                        searchError = null
+                    },
                     label = { Text("Or enter suburb / city name...") },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     singleLine = true,
@@ -172,15 +176,11 @@ fun LocationSetupCard(
                 Button(
                     onClick = {
                         if (customSearchText.isNotBlank()) {
-                            // Check if matches preset or default coordinate
-                            val match = LocationHelper.SA_POPULAR_PRESETS.find {
-                                it.name.contains(customSearchText, ignoreCase = true) ||
-                                it.cityOrRegion.contains(customSearchText, ignoreCase = true)
-                            }
+                            val match = LocationHelper.findPreset(customSearchText)
                             if (match != null) {
                                 onLocationSelected(match.latitude, match.longitude, "${match.name}, ${match.cityOrRegion}")
                             } else {
-                                onLocationSelected(-26.1076, 28.0567, customSearchText.trim())
+                                searchError = "Choose a listed area so distances stay accurate."
                             }
                         }
                     },
@@ -189,6 +189,15 @@ fun LocationSetupCard(
                 ) {
                     Icon(Icons.Default.ArrowForward, contentDescription = "Submit")
                 }
+            }
+
+            if (searchError != null) {
+                Text(
+                    text = searchError.orEmpty(),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(14.dp))

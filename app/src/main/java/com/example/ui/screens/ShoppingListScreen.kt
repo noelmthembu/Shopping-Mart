@@ -139,7 +139,7 @@ fun ShoppingListScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "1. Enter your location above to find local stores\n2. Download a store catalogue from my-catalogue.co.za for offline access\n3. Start shopping with live budget tracking and club discounts!",
+                                text = "1. Choose a listed location or use GPS\n2. Browse sample store offers and confirm current prices in store\n3. Track your budget and linked loyalty discounts",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 lineHeight = 20.sp

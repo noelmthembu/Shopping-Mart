@@ -72,14 +72,15 @@ class LocationHelper(private val context: Context) {
             val normalizedQuery = query.trim().replace(Regex("\\s+"), " ").lowercase()
             if (normalizedQuery.isBlank()) return null
 
-            val nameMatch = SA_POPULAR_PRESETS.singleOrNull {
-                it.name.trim().replace(Regex("\\s+"), " ").lowercase() == normalizedQuery
+            val nameMatches = SA_POPULAR_PRESETS.filter {
+                it.name.trim().replace(Regex("\\s+"), " ").lowercase().contains(normalizedQuery)
             }
-            if (nameMatch != null) return nameMatch
+            if (nameMatches.size == 1) return nameMatches.single()
 
-            return SA_POPULAR_PRESETS
-                .filter { it.cityOrRegion.trim().replace(Regex("\\s+"), " ").lowercase() == normalizedQuery }
-                .singleOrNull()
+            val regionMatches = SA_POPULAR_PRESETS.filter {
+                it.cityOrRegion.trim().replace(Regex("\\s+"), " ").lowercase().contains(normalizedQuery)
+            }
+            return regionMatches.singleOrNull()
         }
     }
 
@@ -153,6 +154,7 @@ class LocationHelper(private val context: Context) {
             latitude = lat,
             longitude = lng,
             isSimulated = true,
+            accuracyMeters = 1000f,
             areaName = area,
             isConfigured = true
         )
@@ -178,7 +180,7 @@ class LocationHelper(private val context: Context) {
             StoreWithDistance(
                 store = store,
                 distanceKm = km,
-                distanceFormatted = formatted,
+                distanceFormatted = if (userLoc.isSimulated) "About $formatted" else formatted,
                 isNearby = km <= NEARBY_RADIUS_KM
             )
         }.sortedBy { it.distanceKm }

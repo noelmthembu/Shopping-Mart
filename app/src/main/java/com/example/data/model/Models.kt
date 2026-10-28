@@ -23,8 +23,8 @@ data class Store(
     val pointsPerRand: Double = 0.5,
     val discountPercentForCardHolders: Int = 15,
     val promoBannerText: String = "",
-    val catalogueSource: String = "my-catalogue.co.za",
-    val catalogueValidity: String = "Valid 19 Oct - 08 Nov 2026",
+    val catalogueSource: String = "Sample data",
+    val catalogueValidity: String = "Sample offers • verify in store",
     val isDownloaded: Boolean = false,
     val downloadedAt: Long = 0L,
     val totalItemsCount: Int = 0,
@@ -52,7 +52,7 @@ data class CatalogueItem(
     val promoTag: String = "",
     val isWeeklyDeal: Boolean = false,
     val loyaltyPointsMultiplier: Int = 1,
-    val catalogueSource: String = "my-catalogue.co.za",
+    val catalogueSource: String = "Sample data",
     val imageType: String = "",
     val imageUrl: String = ""
 )

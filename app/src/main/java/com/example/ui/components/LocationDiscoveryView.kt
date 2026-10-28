@@ -66,6 +66,7 @@ fun LocationDiscoveryScreen(
     modifier: Modifier = Modifier
 ) {
     var searchText by remember { mutableStateOf("") }
+    var searchError by remember { mutableStateOf<String?>(null) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -242,7 +243,10 @@ fun LocationDiscoveryScreen(
                     ) {
                         OutlinedTextField(
                             value = searchText,
-                            onValueChange = { searchText = it },
+                            onValueChange = {
+                                searchText = it
+                                searchError = null
+                            },
                             placeholder = { Text("Search suburb, mall, city (e.g. Sandton, Sea Point)...") },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                             singleLine = true,
@@ -255,14 +259,11 @@ fun LocationDiscoveryScreen(
                         Button(
                             onClick = {
                                 if (searchText.isNotBlank()) {
-                                    val match = LocationHelper.SA_POPULAR_PRESETS.find {
-                                        it.name.contains(searchText, ignoreCase = true) ||
-                                        it.cityOrRegion.contains(searchText, ignoreCase = true)
-                                    }
+                                    val match = LocationHelper.findPreset(searchText)
                                     if (match != null) {
                                         onLocationSelected(match.latitude, match.longitude, "${match.name}, ${match.cityOrRegion}")
                                     } else {
-                                        onLocationSelected(-26.1076, 28.0567, searchText.trim())
+                                        searchError = "Choose one of the listed areas so distances stay accurate."
                                     }
                                 }
                             },
@@ -272,6 +273,15 @@ fun LocationDiscoveryScreen(
                         ) {
                             Icon(Icons.Default.ArrowForward, contentDescription = "Continue")
                         }
+                    }
+
+                    if (searchError != null) {
+                        Text(
+                            text = searchError.orEmpty(),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
                     }
 
                     // Autocomplete Suggestions Dropdown
@@ -322,7 +332,7 @@ fun LocationDiscoveryScreen(
                                                     color = MaterialTheme.colorScheme.onSurface
                                                 )
                                                 Text(
-                                                    text = "${preset.cityOrRegion} • 7 Stores Available (Checkers, PnP, Woolworths)",
+                                                    text = "${preset.cityOrRegion} • Sample store listings",
                                                     fontSize = 11.sp,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )

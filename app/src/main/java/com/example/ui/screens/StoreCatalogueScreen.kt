@@ -269,7 +269,7 @@ fun StoreDirectoryView(
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "my-catalogue.co.za",
+                                        text = "SAMPLE CATALOGUE",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White
@@ -294,7 +294,7 @@ fun StoreDirectoryView(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Browse official weekly specials from Shoprite, Checkers Hyper, Pick n Pay, SPAR, Makro and Woolworths Food.",
+                                text = "Browse sample catalogue listings for Shoprite, Checkers Hyper, Pick n Pay, SPAR, Makro and Woolworths Food. Confirm prices in store.",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFF475569)
                         )
@@ -326,14 +326,14 @@ fun StoreDirectoryView(
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Weekly Flyer Specials",
+                            text = "Sample Flyer Offers",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color(0xFF0F172A)
                         )
                     }
                     Text(
-                        text = "my-catalogue.co.za",
+                        text = "SAMPLE OFFERS",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF007A3D)
@@ -519,7 +519,7 @@ fun StoreDetailCatalogueView(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // Store Header with Official Store Logo & Back button
+        // Store Header with retailer logo and back button
         item {
             Spacer(modifier = Modifier.height(4.dp))
             Row(
@@ -551,7 +551,7 @@ fun StoreDetailCatalogueView(
             }
         }
 
-        // my-catalogue.co.za Validity & View Mode Toggle
+        // Sample data notice & view mode toggle
         item {
             Surface(
                 shape = RoundedCornerShape(10.dp),
@@ -570,7 +570,7 @@ fun StoreDetailCatalogueView(
                             color = Color(0xFF007A3D)
                         ) {
                             Text(
-                                text = "my-catalogue.co.za",
+                                text = "SAMPLE DATA",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,

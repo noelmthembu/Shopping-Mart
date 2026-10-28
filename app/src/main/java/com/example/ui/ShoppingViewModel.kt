@@ -215,7 +215,9 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
             val loc = locationHelper.fetchCurrentLocation()
             if (loc.isConfigured) {
                 _currentScreen.value = AppScreen.STORE_CATALOGUES
-                _userMessage.emit("GPS Location set. Choose a store to download catalogue.")
+                _userMessage.emit("GPS location set. Distances are based on the reported accuracy of ${loc.accuracyMeters.toInt()} m.")
+            } else {
+                _userMessage.emit("Could not get a GPS fix. Try again or choose a listed area.")
             }
         }
     }
@@ -234,7 +236,7 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
             val success = repository.downloadStoreCatalogue(storeId)
             _downloadingStoreIds.value = _downloadingStoreIds.value - storeId
             if (success) {
-                _userMessage.emit("Catalogue downloaded from my-catalogue.co.za. Ready for offline shopping.")
+                _userMessage.emit("Sample catalogue saved for offline browsing. Confirm current prices in store.")
                 if (openAfterDownload) {
                     selectStoreForCatalogue(storeId)
                     _currentScreen.value = AppScreen.STORE_CATALOGUES
@@ -461,7 +463,7 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
     fun triggerNearbyPromotionNotification(store: Store) {
         notificationHelper.postPromotionNotification(store, store.promoBannerText)
         viewModelScope.launch {
-            _userMessage.emit("my-catalogue.co.za deal alert sent for ${store.name}!")
+            _userMessage.emit("Sample deal alert sent for ${store.name}.")
         }
     }
 

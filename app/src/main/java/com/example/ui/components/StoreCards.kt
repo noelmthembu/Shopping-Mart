@@ -485,7 +485,7 @@ fun FlyerDealGridCard(
                             .fillMaxSize()
                             .padding(4.dp)
                     )
-                } else if (item.imageUrl.isNotBlank() && !item.imageUrl.contains("photo-1541592106381-b31e9677c0e5")) {
+                } else if (item.imageUrl.isNotBlank() && !item.imageUrl.contains("images.unsplash.com")) {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(item.imageUrl)
@@ -623,7 +623,7 @@ fun CatalogueItemCard(
                             .fillMaxSize()
                             .padding(4.dp)
                     )
-                } else if (item.imageUrl.isNotBlank() && !item.imageUrl.contains("photo-1541592106381-b31e9677c0e5")) {
+                } else if (item.imageUrl.isNotBlank() && !item.imageUrl.contains("images.unsplash.com")) {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(item.imageUrl)

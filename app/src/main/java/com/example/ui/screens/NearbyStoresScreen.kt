@@ -50,6 +50,7 @@ import com.example.ui.AppScreen
 import com.example.ui.ShoppingViewModel
 import com.example.ui.components.LocationSetupCard
 import com.example.ui.components.StoreCard
+import com.example.location.LocationHelper
 
 @Composable
 fun NearbyStoresScreen(
@@ -59,6 +60,7 @@ fun NearbyStoresScreen(
     val storesWithDistance by viewModel.storesWithDistance.collectAsState()
     val userLocation by viewModel.userLocation.collectAsState()
     val downloadingIds by viewModel.downloadingStoreIds.collectAsState()
+    val nearbyStores = storesWithDistance.filter { it.isNearby }
 
     // Location Permission launcher
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -138,7 +140,11 @@ fun NearbyStoresScreen(
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                                 Text(
-                                    text = "${userLocation.areaName} (${String.format("%.4f", userLocation.latitude)}, ${String.format("%.4f", userLocation.longitude)})",
+                                    text = if (userLocation.isSimulated) {
+                                        "${userLocation.areaName} • area estimate"
+                                    } else {
+                                        "${userLocation.areaName} • GPS accuracy ${userLocation.accuracyMeters.toInt()} m"
+                                    },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                                 )
@@ -275,12 +281,12 @@ fun NearbyStoresScreen(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Real-Time my-catalogue.co.za Alerts",
+                            text = "Sample store alerts",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Receive notifications when near stores with active catalogue deals. Tap the bell on any store below to test!",
+                            text = "Demo notifications only. Store and offer data is sample content; confirm details with the retailer.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -305,14 +311,25 @@ fun NearbyStoresScreen(
         // Stores sorted by distance (kilometers)
         item {
             Text(
-                text = "Nearby Supermarkets (Sorted by Distance)",
+                text = "Stores within ${LocationHelper.NEARBY_RADIUS_KM.toInt()} km",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
 
-        items(storesWithDistance, key = { it.store.id }) { item ->
+        if (userLocation.isConfigured && nearbyStores.isEmpty()) {
+            item {
+                Text(
+                    text = "No sample stores are listed within ${LocationHelper.NEARBY_RADIUS_KM.toInt()} km of this location.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
+            }
+        }
+
+        items(nearbyStores, key = { it.store.id }) { item ->
             StoreCard(
                 store = item.store,
                 distanceFormatted = if (userLocation.isConfigured) item.distanceFormatted else null,
