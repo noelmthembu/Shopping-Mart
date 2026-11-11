@@ -738,8 +738,6 @@ fun StoreDetailCatalogueView(
                             if (selected) Color(0xFF007A3D) else Color(0xFFCBD5D1)
                         ),
                         colors = FilterChipDefaults.filterChipColors(
-                            containerColor = Color.White,
-                            labelColor = Color(0xFF475569),
                             selectedContainerColor = Color(0xFFF0FDF4),
                             selectedLabelColor = Color(0xFF007A3D)
                         )
