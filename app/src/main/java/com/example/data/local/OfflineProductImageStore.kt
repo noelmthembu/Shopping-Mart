@@ -70,15 +70,11 @@ object OfflineProductImageStore {
             "product_biogen_collagen" to R.drawable.product_biogen_collagen,
             "product_cetaphil_cleanser" to R.drawable.product_cetaphil_cleanser,
             "product_corenza_c" to R.drawable.product_corenza_c,
-            "product_albany_bread" to R.drawable.product_albany_bread,
-            "product_coke_2l" to R.drawable.product_coke_2l,
-            "product_jacobs_gold" to R.drawable.product_jacobs_gold,
-            "product_nescafe_classic" to R.drawable.product_nescafe_classic,
+            "product_clover_milk" to R.drawable.product_clover_milk,
             "product_koo_beans" to R.drawable.product_koo_beans,
             "product_rhodes_beans" to R.drawable.product_rhodes_beans,
-            "product_clover_milk" to R.drawable.product_clover_milk,
             "product_white_star_maize" to R.drawable.product_white_star_maize,
-            "deal_baramakama_eggs" to R.drawable.deal_baramakama_eggs,
+            "product_eggs_tray" to R.drawable.product_eggs_tray,
             "deal_thokoman" to R.drawable.deal_thokoman
         )
 

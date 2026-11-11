@@ -238,34 +238,17 @@ object ProductVisuals {
     fun getProductDrawableRes(name: String, imageType: String): Int? {
         val lower = "$name $imageType".lowercase()
         return when {
-            // Bio-Oil
             lower.contains("bio-oil") || lower.contains("bio oil") -> R.drawable.product_bio_oil
-            // Biogen Collagen
             lower.contains("biogen") || lower.contains("collagen") -> R.drawable.product_biogen_collagen
-            // Cetaphil
             lower.contains("cetaphil") -> R.drawable.product_cetaphil_cleanser
-            // Corenza C
             lower.contains("corenza") -> R.drawable.product_corenza_c
-            // Albany Bread
-            lower.contains("albany") -> R.drawable.product_albany_bread
-            // Coca-Cola 2L
-            lower.contains("coca-cola") || lower.contains("coke") || lower.contains("cola") -> R.drawable.product_coke_2l
-            // Jacobs Kronung Gold Coffee
-            lower.contains("jacobs") -> R.drawable.product_jacobs_gold
-            // Nescafe Classic Coffee
-            lower.contains("nescafé") || lower.contains("nescafe") -> R.drawable.product_nescafe_classic
-            // KOO Beans
-            lower.contains("koo") && lower.contains("bean") -> R.drawable.product_koo_beans
-            // Rhodes Beans
-            lower.contains("rhodes") && lower.contains("bean") -> R.drawable.product_rhodes_beans
-            // Clover Milk
             lower.contains("clover") && lower.contains("milk") -> R.drawable.product_clover_milk
-            // Baramakama Eggs
-            lower.contains("baramakama") && lower.contains("egg") -> R.drawable.deal_baramakama_eggs
-            // Thokoman Peanut Butter
+            lower.contains("koo") && lower.contains("bean") -> R.drawable.product_koo_beans
+            lower.contains("rhodes") && lower.contains("bean") -> R.drawable.product_rhodes_beans
+            lower.contains("white star") || lower.contains("maize meal") || lower.contains("mielie") ->
+                R.drawable.product_white_star_maize
+            lower.contains("baramakama") && lower.contains("egg") -> R.drawable.product_eggs_tray
             lower.contains("thokoman") -> R.drawable.deal_thokoman
-            // White Star Maize
-            lower.contains("white star") || lower.contains("maize meal") || lower.contains("mielie") -> R.drawable.product_white_star_maize
             else -> null
         }
     }
