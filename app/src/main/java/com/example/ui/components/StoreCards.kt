@@ -437,7 +437,7 @@ fun RedFlyerPriceTag(
 }
 
 /**
- * Authentic 2-Column Flyer Grid Tile (matching image_3a6978c1.png)
+ * Authentic 2-Column Flyer Grid Tile (matching Flyer_items_2x_eb0a8d42.png attachment)
  */
 @Composable
 fun FlyerDealGridCard(
@@ -446,29 +446,41 @@ fun FlyerDealGridCard(
     onAddToCart: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isEggsDeal = item.imageType == "baramakama_eggs" || item.name.contains("Eggs Large 30", ignoreCase = true)
+    val isDiscounted = item.cardDiscountPrice < item.regularPrice
+    val displayPrice = if (isDiscounted) item.cardDiscountPrice else item.regularPrice
+    val priceStr = String.format("%.2f", displayPrice)
+    val parts = priceStr.split(".")
+    val integerPart = parts.getOrNull(0) ?: priceStr
+    val decimalPart = parts.getOrNull(1) ?: "00"
+
+    val badgeColor = when {
+        item.promoTag.contains("Daily fresh", ignoreCase = true) -> Color(0xFF007A3D)
+        item.promoTag.contains("Buy 2", ignoreCase = true) || item.promoTag.contains("Combo", ignoreCase = true) -> Color(0xFFC2410C)
+        item.promoTag.contains("Save", ignoreCase = true) -> Color(0xFFDC2626)
+        else -> Color(0xFFDC2626)
+    }
 
     Card(
         modifier = modifier
             .fillMaxWidth()
             .testTag("flyer_grid_item_${item.id}"),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF161D2B)),
+        border = BorderStroke(1.dp, Color(0xFF243042)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(10.dp)
         ) {
-            // Product Visual Container with Promotional Megaphone Sticker
+            // White Product Visual Container with Rounded Promotional Pill Badge
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(130.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFF8FAFC)),
+                    .height(136.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color.White),
                 contentAlignment = Alignment.Center
             ) {
                 ItemPicture(
@@ -479,19 +491,21 @@ fun FlyerDealGridCard(
                     size = PictureSize.EXTRA_LARGE
                 )
 
-                // Promotional Megaphone / Sticker Badge
-                if (!isEggsDeal && item.promoTag.isNotBlank()) {
+                // Rounded Promotional Pill Badge
+                if (item.promoTag.isNotBlank()) {
                     Surface(
-                        shape = RoundedCornerShape(topStart = 8.dp, bottomEnd = 8.dp),
-                        color = Color(0xFFE31B23),
-                        modifier = Modifier.align(Alignment.TopStart)
+                        shape = RoundedCornerShape(8.dp),
+                        color = badgeColor,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(6.dp)
                     ) {
                         Text(
                             text = item.promoTag,
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
                             color = Color.White,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -499,52 +513,93 @@ fun FlyerDealGridCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Product Title & Unit
+            // Product Title & Unit (White text for dark mode)
             Text(
                 text = item.name,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF0F172A),
+                color = Color.White,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                lineHeight = 16.sp,
+                lineHeight = 17.sp,
                 fontSize = 13.sp
             )
+
+            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
                 text = item.unit,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF64748B),
+                color = Color(0xFF94A3B8),
                 fontSize = 11.sp
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Price Tag and Add Button Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                RedFlyerPriceTag(
-                    regularPrice = item.regularPrice,
-                    discountPrice = item.cardDiscountPrice
+            // Regular Price (Strike-through)
+            if (isDiscounted) {
+                Text(
+                    text = String.format("R%.2f", item.regularPrice),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF94A3B8),
+                    textDecoration = TextDecoration.LineThrough,
+                    fontSize = 11.sp
                 )
+            } else {
+                Spacer(modifier = Modifier.height(14.dp))
+            }
 
-                Button(
-                    onClick = onAddToCart,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF007A3D)
-                    ),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                    modifier = Modifier.testTag("grid_add_${item.id}")
+            // Deal Price with Superscript Cents (e.g., R16⁴⁹)
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
+                Text(
+                    text = "R$integerPart",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White
+                )
+                Text(
+                    text = decimalPart,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(bottom = 4.dp, start = 1.dp)
+                )
+            }
+
+            // Full-Width Green Add to Cart Button with + Icon
+            Button(
+                onClick = onAddToCart,
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF007A3D)
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(38.dp)
+                    .testTag("grid_add_${item.id}")
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text("Add", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add to cart",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Add to cart",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                 }
             }
         }

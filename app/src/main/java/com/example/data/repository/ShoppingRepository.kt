@@ -55,6 +55,10 @@ class ShoppingRepository(
         loyaltyCardDao.getCardForStore(storeId)
 
     suspend fun initializeSeedDataIfNeeded() = withContext(Dispatchers.IO) {
+        context?.let {
+            com.example.data.local.OfflineProductImageStore.ensureBundledImagesSavedLocally(it)
+        }
+
         val existingStores = storeDao.getAllStores().firstOrNull() ?: emptyList()
         val downloadedMap = existingStores.associate { it.id to (it.isDownloaded to it.downloadedAt) }
         val updatedStores = SampleStoreData.stores.map { store ->

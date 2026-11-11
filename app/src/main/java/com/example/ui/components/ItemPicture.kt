@@ -238,12 +238,32 @@ object ProductVisuals {
     fun getProductDrawableRes(name: String, imageType: String): Int? {
         val lower = "$name $imageType".lowercase()
         return when {
-            // KOO
+            // Bio-Oil
+            lower.contains("bio-oil") || lower.contains("bio oil") -> R.drawable.product_bio_oil
+            // Biogen Collagen
+            lower.contains("biogen") || lower.contains("collagen") -> R.drawable.product_biogen_collagen
+            // Cetaphil
+            lower.contains("cetaphil") -> R.drawable.product_cetaphil_cleanser
+            // Corenza C
+            lower.contains("corenza") -> R.drawable.product_corenza_c
+            // Albany Bread
+            lower.contains("albany") -> R.drawable.product_albany_bread
+            // Coca-Cola 2L
+            lower.contains("coca-cola") || lower.contains("coke") || lower.contains("cola") -> R.drawable.product_coke_2l
+            // Jacobs Kronung Gold Coffee
+            lower.contains("jacobs") -> R.drawable.product_jacobs_gold
+            // Nescafe Classic Coffee
+            lower.contains("nescafé") || lower.contains("nescafe") -> R.drawable.product_nescafe_classic
+            // KOO Beans
             lower.contains("koo") && lower.contains("bean") -> R.drawable.product_koo_beans
-            // Rhodes
+            // Rhodes Beans
             lower.contains("rhodes") && lower.contains("bean") -> R.drawable.product_rhodes_beans
+            // Clover Milk
+            lower.contains("clover") && lower.contains("milk") -> R.drawable.product_clover_milk
             // Baramakama Eggs
             lower.contains("baramakama") && lower.contains("egg") -> R.drawable.deal_baramakama_eggs
+            // Thokoman Peanut Butter
+            lower.contains("thokoman") -> R.drawable.deal_thokoman
             // White Star Maize
             lower.contains("white star") || lower.contains("maize meal") || lower.contains("mielie") -> R.drawable.product_white_star_maize
             else -> null
@@ -261,12 +281,23 @@ fun ItemPicture(
     discountBadgeText: String? = null,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val theme = ProductVisuals.resolveTheme(itemName, category, imageType)
     val specificDrawable = ProductVisuals.getProductDrawableRes(itemName, imageType)
+    val localFileUri = remember(itemName, imageType) {
+        com.example.data.local.OfflineProductImageStore.getLocalImageUri(context, itemName)
+            ?: com.example.data.local.OfflineProductImageStore.getLocalImageUri(context, imageType)
+    }
     val brandMark = ProductVisuals.resolveBrand(itemName, imageType)
-    var imageFailedToLoad by remember(itemName, imageUrl) { mutableStateOf(false) }
+    var imageFailedToLoad by remember(itemName, imageUrl, localFileUri) { mutableStateOf(false) }
 
-    val bgModifier = if (specificDrawable != null || brandMark != null) {
+    val activeImageUrl = when {
+        !localFileUri.isNullOrBlank() -> localFileUri
+        imageUrl.isNotBlank() && !imageUrl.contains("images.unsplash.com") -> imageUrl
+        else -> ""
+    }
+
+    val bgModifier = if (specificDrawable != null || brandMark != null || activeImageUrl.isNotBlank()) {
         Modifier.background(Color.White)
     } else {
         Modifier.background(theme.bgGradient)
@@ -280,7 +311,22 @@ fun ItemPicture(
             .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
-        if (specificDrawable != null) {
+        if (activeImageUrl.isNotBlank() && !imageFailedToLoad) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(activeImageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = itemName,
+                contentScale = ContentScale.Fit,
+                onError = { imageFailedToLoad = true },
+                onSuccess = { imageFailedToLoad = false },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(2.dp)
+                    .clip(RoundedCornerShape(10.dp))
+            )
+        } else if (specificDrawable != null) {
             Image(
                 painter = painterResource(id = specificDrawable),
                 contentDescription = itemName,
@@ -304,20 +350,6 @@ fun ItemPicture(
                 maxLines = 2,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 4.dp)
-            )
-        } else if (imageUrl.isNotBlank() && !imageUrl.contains("images.unsplash.com") && !imageFailedToLoad) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(imageUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = itemName,
-                contentScale = ContentScale.Crop,
-                onError = { imageFailedToLoad = true },
-                onSuccess = { imageFailedToLoad = false },
-                modifier = Modifier
-                    .size(size.dp)
-                    .clip(RoundedCornerShape(12.dp))
             )
         } else {
             // High-fidelity icon & label graphic product visual (no emojis)
