@@ -262,10 +262,12 @@ fun ItemPicture(
     imageUrl: String = "",
     size: PictureSize = PictureSize.MEDIUM,
     discountBadgeText: String? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showCategoryFallback: Boolean = true
 ) {
     val context = LocalContext.current
     val theme = ProductVisuals.resolveTheme(itemName, category, imageType)
+    // Prefer a verified bundled product packshot whenever one exists.
     val specificDrawable = ProductVisuals.getProductDrawableRes(itemName, imageType)
     val localFileUri = remember(itemName, imageType) {
         com.example.data.local.OfflineProductImageStore.getLocalImageUri(context, itemName)
@@ -274,13 +276,16 @@ fun ItemPicture(
     val brandMark = ProductVisuals.resolveBrand(itemName, imageType)
     var imageFailedToLoad by remember(itemName, imageUrl, localFileUri) { mutableStateOf(false) }
 
+    // A generic cached image must never replace a known, brand-specific package photo.
     val activeImageUrl = when {
+        specificDrawable != null -> ""
         !localFileUri.isNullOrBlank() -> localFileUri
         imageUrl.isNotBlank() && !imageUrl.contains("images.unsplash.com") -> imageUrl
         else -> ""
     }
 
-    val bgModifier = if (specificDrawable != null || brandMark != null || activeImageUrl.isNotBlank()) {
+    val hasRealImage = specificDrawable != null || activeImageUrl.isNotBlank()
+    val bgModifier = if (hasRealImage || !showCategoryFallback) {
         Modifier.background(Color.White)
     } else {
         Modifier.background(theme.bgGradient)
@@ -294,7 +299,16 @@ fun ItemPicture(
             .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
-        if (activeImageUrl.isNotBlank() && !imageFailedToLoad) {
+        if (specificDrawable != null) {
+            Image(
+                painter = painterResource(id = specificDrawable),
+                contentDescription = itemName,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(7.dp)
+            )
+        } else if (activeImageUrl.isNotBlank() && !imageFailedToLoad) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(activeImageUrl)
@@ -309,16 +323,7 @@ fun ItemPicture(
                     .padding(2.dp)
                     .clip(RoundedCornerShape(10.dp))
             )
-        } else if (specificDrawable != null) {
-            Image(
-                painter = painterResource(id = specificDrawable),
-                contentDescription = itemName,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(3.dp)
-            )
-        } else if (brandMark != null) {
+        } else if (showCategoryFallback && brandMark != null) {
             Text(
                 text = brandMark.name,
                 color = brandMark.color,
@@ -334,8 +339,8 @@ fun ItemPicture(
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
-        } else {
-            // High-fidelity icon & label graphic product visual (no emojis)
+        } else if (showCategoryFallback) {
+            // Category illustration remains available in non-catalogue contexts such as the cart.
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
