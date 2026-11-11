@@ -488,7 +488,8 @@ fun FlyerDealGridCard(
                     category = item.category,
                     imageType = item.imageType,
                     imageUrl = item.imageUrl,
-                    size = PictureSize.EXTRA_LARGE
+                    size = PictureSize.EXTRA_LARGE,
+                    showCategoryFallback = false
                 )
 
                 // Rounded Promotional Pill Badge
@@ -647,7 +648,8 @@ fun CatalogueItemCard(
                     category = item.category,
                     imageType = item.imageType,
                     imageUrl = item.imageUrl,
-                    size = PictureSize.MEDIUM
+                    size = PictureSize.MEDIUM,
+                    showCategoryFallback = false
                 )
             }
 
