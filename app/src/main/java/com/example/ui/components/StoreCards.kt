@@ -465,8 +465,8 @@ fun FlyerDealGridCard(
             .fillMaxWidth()
             .testTag("flyer_grid_item_${item.id}"),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF161D2B)),
-        border = BorderStroke(1.dp, Color(0xFF243042)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF07171C)),
+        border = BorderStroke(1.dp, Color(0xFF1B343A)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
