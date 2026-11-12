@@ -2,8 +2,12 @@ package com.example.data.repository
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.util.Log
 import com.example.ai.AiCatalogueExtractor
 import com.example.data.local.AppDatabase
+import com.example.data.local.OfflineProductImageStore
 import com.example.data.model.BudgetSettings
 import com.example.data.model.CatalogueItem
 import com.example.data.model.LoyaltyCard
@@ -13,6 +17,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
+
+data class ProductImageGenerationSummary(
+    val totalProducts: Int,
+    val generatedImages: Int,
+    val alreadyAvailable: Int,
+    val failedImages: Int
+)
+
+private const val IMAGE_GENERATION_TAG = "ProductImageDownload"
 
 class ShoppingRepository(
     private val db: AppDatabase,
@@ -154,40 +167,127 @@ class ShoppingRepository(
         }
     }
 
+    /**
+     * Downloads the store catalogue into Room only. This operation is fully local and does not
+     * call Gemini or require network access, so the catalogue can be used offline immediately.
+     */
     suspend fun downloadStoreCatalogue(storeId: String): Boolean = withContext(Dispatchers.IO) {
         val store = storeDao.getStoreById(storeId) ?: return@withContext false
         val items = SampleStoreData.getCatalogueForStore(storeId)
+        if (items.isEmpty()) return@withContext false
+
         catalogueItemDao.deleteItemsForStore(storeId)
         catalogueItemDao.insertItems(items)
 
-        // Automatically extract & enrich product images from the offline flyer download via AI
-        if (aiExtractor != null) {
-            try {
-                val aiItems = aiExtractor!!.extractAndEnrichCatalogueForStore(storeId, store.name)
-                if (aiItems.isNotEmpty()) {
-                    catalogueItemDao.insertItems(aiItems)
-                }
-            } catch (e: Exception) {
-                // Non-blocking fallback
-            }
-        }
-
+        val downloadedAt = System.currentTimeMillis()
         val totalCount = catalogueItemDao.getCountForStore(storeId)
-        storeDao.setStoreDownloaded(storeId, true, System.currentTimeMillis())
-        storeDao.updateStore(store.copy(isDownloaded = true, downloadedAt = System.currentTimeMillis(), totalItemsCount = totalCount))
+        storeDao.updateStore(
+            store.copy(
+                isDownloaded = true,
+                downloadedAt = downloadedAt,
+                totalItemsCount = totalCount
+            )
+        )
+
+        Log.d(IMAGE_GENERATION_TAG, "Saved $totalCount catalogue products for $storeId to local Room database")
         true
     }
 
-    suspend fun extractAiImagesForStore(storeId: String): List<CatalogueItem> = withContext(Dispatchers.IO) {
-        val store = storeDao.getStoreById(storeId) ?: return@withContext emptyList()
-        val extractor = aiExtractor ?: return@withContext emptyList()
-        val aiItems = extractor.extractAndEnrichCatalogueForStore(storeId, store.name)
-        if (aiItems.isNotEmpty()) {
-            catalogueItemDao.insertItems(aiItems)
-            val currentCount = catalogueItemDao.getCountForStore(storeId)
-            storeDao.updateStore(store.copy(totalItemsCount = currentCount))
+    /**
+     * Checks whether the device has a validated internet connection. Gemini must never be
+     * called while offline; catalogue downloads remain local regardless of this result.
+     */
+    fun isNetworkAvailable(): Boolean {
+        val appContext = context?.applicationContext ?: return false
+        val connectivityManager = appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            ?: return false
+        val activeNetwork = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
+
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    }
+
+    /**
+     * Uses Gemini to generate one product packshot for every catalogue item that does not
+     * already have a bundled or previously saved image. Each image is persisted locally and
+     * its file URI is written into Room, making it available after the device goes offline.
+     */
+    suspend fun generateProductImagesForStore(
+        storeId: String,
+        onProgress: (completed: Int, total: Int, productName: String) -> Unit = { _, _, _ -> }
+    ): ProductImageGenerationSummary = withContext(Dispatchers.IO) {
+        val appContext = context?.applicationContext
+            ?: throw IllegalStateException("Application context is unavailable.")
+        if (!isNetworkAvailable()) {
+            throw IllegalStateException("Connect to the internet before downloading Gemini product images. Your catalogue is already saved offline.")
         }
-        aiItems
+
+        ensureItemsLoadedForStore(storeId)
+        val items = catalogueItemDao.getItemsForStore(storeId).firstOrNull().orEmpty()
+        if (items.isEmpty()) {
+            return@withContext ProductImageGenerationSummary(
+                totalProducts = 0,
+                generatedImages = 0,
+                alreadyAvailable = 0,
+                failedImages = 0
+            )
+        }
+
+        val extractor = aiExtractor
+            ?: throw IllegalStateException("Gemini image generation is not configured.")
+
+        var generated = 0
+        var alreadyAvailable = 0
+        var failed = 0
+
+        items.forEachIndexed { index, item ->
+            onProgress(index, items.size, item.name)
+
+            if (OfflineProductImageStore.hasProductImage(appContext, item.name, item.imageType)) {
+                alreadyAvailable++
+            } else {
+                val result = extractor.generateProductImage(item)
+                val bitmap = result.getOrNull()
+                if (bitmap == null) {
+                    failed++
+                    Log.w(
+                        IMAGE_GENERATION_TAG,
+                        "Gemini did not generate an image for ${item.name}",
+                        result.exceptionOrNull()
+                    )
+                } else {
+                    val localUri = OfflineProductImageStore.saveImageLocally(
+                        appContext,
+                        item.name,
+                        bitmap
+                    )
+                    if (localUri.isBlank()) {
+                        failed++
+                    } else {
+                        catalogueItemDao.updateProductImage(
+                            storeId = storeId,
+                            itemId = item.id,
+                            imageUrl = localUri
+                        )
+                        generated++
+                        Log.d(IMAGE_GENERATION_TAG, "Saved product image offline: ${item.name}")
+                    }
+                }
+            }
+
+            onProgress(index + 1, items.size, item.name)
+
+            // Run one Gemini image request at a time to avoid bursting the model quota.
+            if (index < items.lastIndex) kotlinx.coroutines.delay(500L)
+        }
+
+        ProductImageGenerationSummary(
+            totalProducts = items.size,
+            generatedImages = generated,
+            alreadyAvailable = alreadyAvailable,
+            failedImages = failed
+        )
     }
 
     suspend fun scanAndImportFlyerBitmap(
