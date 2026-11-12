@@ -254,19 +254,48 @@ class ShoppingViewModel(application: Application) : AndroidViewModel(application
 
     fun extractAiImagesFromDownload(storeId: String) {
         viewModelScope.launch {
+            if (!repository.isNetworkAvailable()) {
+                val message = "Connect to the internet to generate product images with Gemini. Your store catalogue is already saved offline."
+                _aiExtractionState.value = AiExtractionUiState.Error(message)
+                _userMessage.emit(message)
+                return@launch
+            }
+
             val store = repository.getStoreById(storeId)
             val storeName = store?.name ?: "Store"
-            _aiExtractionState.value = AiExtractionUiState.Scanning(storeName, "Gemini 3.8 Flash Vision analyzing offline flyer...")
+            _aiExtractionState.value = AiExtractionUiState.Scanning(
+                storeName,
+                "Preparing every product in the offline catalogue..."
+            )
+
             try {
-                val extracted = repository.extractAiImagesForStore(storeId)
+                val summary = repository.generateProductImagesForStore(storeId) { completed, total, productName ->
+                    val currentProduct = (completed + 1).coerceAtMost(total)
+                    _aiExtractionState.value = AiExtractionUiState.Scanning(
+                        storeName,
+                        "Gemini image $currentProduct of $total: $productName"
+                    )
+                }
+
+                val message = buildString {
+                    append("Saved ${summary.generatedImages} Gemini-generated product images offline.")
+                    append(" ${summary.alreadyAvailable} products already had local photos.")
+                    if (summary.failedImages > 0) {
+                        append(" ${summary.failedImages} images could not be generated.")
+                    }
+                }
+
                 _aiExtractionState.value = AiExtractionUiState.Success(
-                    message = "AI extracted and linked ${extracted.size} authentic product images from the offline flyer.",
-                    count = extracted.size
+                    message = message,
+                    count = summary.generatedImages
                 )
-                _userMessage.emit("AI extracted ${extracted.size} authentic product images from offline catalogue.")
+                _userMessage.emit(message)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
-                _aiExtractionState.value = AiExtractionUiState.Error(e.localizedMessage ?: "AI extraction failed.")
-                _userMessage.emit("AI visual extraction completed with authentic offline visuals.")
+                val message = e.localizedMessage ?: "Gemini product image generation failed."
+                _aiExtractionState.value = AiExtractionUiState.Error(message)
+                _userMessage.emit(message)
             }
         }
     }
