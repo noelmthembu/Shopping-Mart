@@ -6,17 +6,20 @@ import android.graphics.BitmapFactory
 import android.util.Log
 import com.example.data.model.CatalogueItem
 import com.google.firebase.Firebase
+import com.google.firebase.ai.GenerativeBackend
 import com.google.firebase.ai.ai
+import com.google.firebase.ai.type.ImagePart
+import com.google.firebase.ai.type.ResponseModality
 import com.google.firebase.ai.type.Schema
 import com.google.firebase.ai.type.content
 import com.google.firebase.ai.type.generationConfig
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.json.JSONObject
-import java.util.UUID
 
 private const val TAG = "AiCatalogueExtractor"
 
@@ -75,6 +78,70 @@ class AiCatalogueExtractor(private val context: Context) {
             modelName = "gemini-3.8-flash",
             generationConfig = generationConfig
         )
+    }
+
+    // Gemini Nano Banana generates one product packshot per catalogue item.
+    // The generated bitmap is saved locally by ShoppingRepository after each request.
+    private val imageModel by lazy {
+        Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel(
+            modelName = "gemini-nano-banana-2.1",
+            generationConfig = generationConfig {
+                responseModalities = listOf(ResponseModality.IMAGE)
+            }
+        )
+    }
+
+    suspend fun generateProductImage(item: CatalogueItem): Result<Bitmap> = withContext(Dispatchers.IO) {
+        val prompt = """
+            Create one premium, photorealistic e-commerce product packshot for this exact South African retail product.
+
+            Product name: ${item.name}
+            Product category: ${item.category}
+            Product size: ${item.unit}
+            Brand and product cues: ${item.imageType}
+
+            Image requirements:
+            - Show one product only, centred, upright and fully visible.
+            - Use realistic retail packaging appropriate to the product (bottle, jar, box, pouch, tin, tray or bag).
+            - Keep the product visually consistent with the named brand and product type.
+            - Use a clean pure-white studio background with soft natural shadow.
+            - Use professional supermarket catalogue photography and accurate proportions.
+            - Do not add price labels, sale stickers, badges, extra products, hands, shelves or props.
+            - Do not invent unrelated brand names, slogans, ingredients or claims.
+            - No watermark, no borders and no text outside the product packaging.
+            - Square 1:1 composition with the entire package inside the frame.
+        """.trimIndent()
+
+        var lastError: Exception? = null
+        for (attempt in 0..1) {
+            try {
+                val response = withTimeout(90_000L) {
+                    imageModel.generateContent(prompt)
+                }
+                val bitmap = response.candidates
+                    .firstOrNull()
+                    ?.content
+                    ?.parts
+                    ?.filterIsInstance<ImagePart>()
+                    ?.firstOrNull()
+                    ?.image
+
+                if (bitmap != null) {
+                    Log.d(TAG, "Gemini generated product image for ${item.name}")
+                    return@withContext Result.success(bitmap)
+                }
+
+                lastError = IllegalStateException("Gemini returned no image for ${item.name}.")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                lastError = e
+                Log.w(TAG, "Image generation attempt ${attempt + 1} failed for ${item.name}", e)
+                if (attempt == 0) delay(1_500L)
+            }
+        }
+
+        Result.failure(lastError ?: IllegalStateException("Gemini image generation failed for ${item.name}."))
     }
 
     private fun resolveBrandImageType(name: String, candidateType: String): String {
@@ -177,171 +244,5 @@ class AiCatalogueExtractor(private val context: Context) {
             Log.e(TAG, "Gemini multimodal flyer analysis failed, returning offline parsed fallback", e)
             Result.failure(e)
         }
-    }
-
-    /**
-     * Executes AI visual extraction on the offline downloaded catalogue for a given store.
-     * If the online Gemini call is unavailable or device is offline, it provides high-precision
-     * local catalogue vision mapping for the downloaded flyer sheet.
-     */
-    suspend fun extractAndEnrichCatalogueForStore(
-        storeId: String,
-        storeName: String
-    ): List<CatalogueItem> = withContext(Dispatchers.IO) {
-        // First try to load the offline flyer graphic if available
-        val flyerBitmap = try {
-            val resId = com.example.R.drawable.flyer_baramakama_eggs
-            val opts = BitmapFactory.Options().apply { inSampleSize = 1 }
-            BitmapFactory.decodeResource(context.resources, resId, opts)
-        } catch (e: Exception) {
-            null
-        }
-
-        var geminiResult: Result<AiFlyerExtractionResult>? = null
-        if (flyerBitmap != null) {
-            try {
-                geminiResult = extractFromFlyerBitmap(flyerBitmap, storeId)
-            } catch (e: Exception) {
-                Log.w(TAG, "Online Gemini extraction failed or offline: ${e.message}")
-            }
-        }
-
-        val extractedItems = mutableListOf<CatalogueItem>()
-
-        if (geminiResult != null && geminiResult.isSuccess) {
-            val result = geminiResult.getOrNull()!!
-            result.products.forEachIndexed { index, p ->
-                extractedItems.add(
-                    CatalogueItem(
-                        id = "ai_ext_${storeId}_$index",
-                        storeId = storeId,
-                        name = p.name,
-                        category = p.category,
-                        regularPrice = p.regularPrice,
-                        cardDiscountPrice = p.cardDiscountPrice,
-                        unit = p.unit,
-                        barcode = "6009${(100000 + index)}",
-                        inStock = true,
-                        promoTag = p.promoTag,
-                        isWeeklyDeal = true,
-                        loyaltyPointsMultiplier = 2,
-                        catalogueSource = "AI Flyer Vision",
-                        imageType = p.imageType,
-                        imageUrl = ""
-                    )
-                )
-            }
-        } else {
-            // High-fidelity fallback that mirrors the real items on the downloaded offline flyer
-            // (Baramakama Eggs, Thokoman Peanut Butter, Rhodes Baked Beans, Koo Baked Beans, Clover Milk, White Star)
-            extractedItems.addAll(
-                listOf(
-                    CatalogueItem(
-                        id = "ai_${storeId}_eggs",
-                        storeId = storeId,
-                        name = "Baramakama Eggs Large 30's",
-                        category = "Dairy & Eggs",
-                        regularPrice = 79.99,
-                        cardDiscountPrice = 64.99,
-                        unit = "30's Tray",
-                        barcode = "6009000199",
-                        inStock = true,
-                        promoTag = "BUY ME TO ENTER • WIN A CAR",
-                        isWeeklyDeal = true,
-                        loyaltyPointsMultiplier = 3,
-                        catalogueSource = "Offline Flyer Download",
-                        imageType = "baramakama_eggs",
-                        imageUrl = ""
-                    ),
-                    CatalogueItem(
-                        id = "ai_${storeId}_koo",
-                        storeId = storeId,
-                        name = "Koo Baked Beans in Tomato Sauce 410g",
-                        category = "Pantry & Staples",
-                        regularPrice = 17.99,
-                        cardDiscountPrice = 14.99,
-                        unit = "410g Tin",
-                        barcode = "6001234008",
-                        inStock = true,
-                        promoTag = "LOW PRICE SPECIAL",
-                        isWeeklyDeal = true,
-                        loyaltyPointsMultiplier = 1,
-                        catalogueSource = "Offline Flyer Download",
-                        imageType = "koo_beans",
-                        imageUrl = ""
-                    ),
-                    CatalogueItem(
-                        id = "ai_${storeId}_thoko",
-                        storeId = storeId,
-                        name = "Thokoman Peanut Butter Smooth 1.1kg",
-                        category = "Pantry & Staples",
-                        regularPrice = 89.99,
-                        cardDiscountPrice = 74.99,
-                        unit = "1.1 kg Tub",
-                        barcode = "6009000198",
-                        inStock = true,
-                        promoTag = "HOT DEAL • 100g FREE",
-                        isWeeklyDeal = true,
-                        loyaltyPointsMultiplier = 2,
-                        catalogueSource = "Offline Flyer Download",
-                        imageType = "thokoman",
-                        imageUrl = ""
-                    ),
-                    CatalogueItem(
-                        id = "ai_${storeId}_rhodes",
-                        storeId = storeId,
-                        name = "Rhodes Baked Beans in Tomato Sauce 400g",
-                        category = "Pantry & Staples",
-                        regularPrice = 17.99,
-                        cardDiscountPrice = 14.99,
-                        unit = "400g Tin",
-                        barcode = "6009000196",
-                        inStock = true,
-                        promoTag = "HOT SPECIAL",
-                        isWeeklyDeal = true,
-                        loyaltyPointsMultiplier = 1,
-                        catalogueSource = "Offline Flyer Download",
-                        imageType = "rhodes_beans",
-                        imageUrl = ""
-                    ),
-                    CatalogueItem(
-                        id = "ai_${storeId}_clover",
-                        storeId = storeId,
-                        name = "Clover Full Cream Fresh Milk 2L",
-                        category = "Dairy & Eggs",
-                        regularPrice = 39.99,
-                        cardDiscountPrice = 32.99,
-                        unit = "2 Litre",
-                        barcode = "6001234001",
-                        inStock = true,
-                        promoTag = "Xtra Savings - Save R7",
-                        isWeeklyDeal = true,
-                        loyaltyPointsMultiplier = 2,
-                        catalogueSource = "Offline Flyer Download",
-                        imageType = "clover_milk",
-                        imageUrl = ""
-                    ),
-                    CatalogueItem(
-                        id = "ai_${storeId}_whitestar",
-                        storeId = storeId,
-                        name = "White Star Super Maize Meal 5kg",
-                        category = "Pantry & Staples",
-                        regularPrice = 79.99,
-                        cardDiscountPrice = 68.99,
-                        unit = "5 kg Bag",
-                        barcode = "6009000101",
-                        inStock = true,
-                        promoTag = "THE CLEVER CHOICE",
-                        isWeeklyDeal = true,
-                        loyaltyPointsMultiplier = 2,
-                        catalogueSource = "Offline Flyer Download",
-                        imageType = "white_star",
-                        imageUrl = ""
-                    )
-                )
-            )
-        }
-
-        extractedItems
     }
 }
