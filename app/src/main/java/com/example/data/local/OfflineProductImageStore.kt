@@ -52,6 +52,7 @@ object OfflineProductImageStore {
      * Returns the file URI if found, or null otherwise.
      */
     fun getLocalImageUri(context: Context, productKey: String): String? {
+        if (productKey.isBlank()) return null
         val cleanKey = sanitizeKey(productKey)
         val file = File(getImagesDir(context), "$cleanKey.jpg")
         return if (file.exists() && file.length() > 0) {
