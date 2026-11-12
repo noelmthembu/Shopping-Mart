@@ -526,7 +526,7 @@ fun StoreDetailCatalogueView(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        text = "Import authentic product photos from a downloaded flyer or scan a new flyer.",
+                        text = "Your store catalogue is saved on this device for offline shopping. When you are online, Gemini can generate and save a product image for every catalogue item that does not already have a local product photo.",
                         color = Color(0xFF64748B),
                         fontSize = 13.sp
                     )
@@ -563,7 +563,7 @@ fun StoreDetailCatalogueView(
                     ) {
                         Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("AI extract product images", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text("Generate all product images with Gemini", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
 
                     androidx.compose.material3.OutlinedButton(
