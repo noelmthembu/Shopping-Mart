@@ -269,7 +269,7 @@ fun ItemPicture(
     val theme = ProductVisuals.resolveTheme(itemName, category, imageType)
     // Prefer a verified bundled product packshot whenever one exists.
     val specificDrawable = ProductVisuals.getProductDrawableRes(itemName, imageType)
-    val localFileUri = remember(itemName, imageType) {
+    val localFileUri = remember(itemName, imageType, imageUrl) {
         com.example.data.local.OfflineProductImageStore.getLocalImageUri(context, itemName)
             ?: com.example.data.local.OfflineProductImageStore.getLocalImageUri(context, imageType)
     }
