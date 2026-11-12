@@ -38,7 +38,7 @@ class ShoppingRepository(
     private val budgetSettingsDao = db.budgetSettingsDao()
 
     private val aiExtractor by lazy {
-        context?.let { AiCatalogueExtractor(it) }
+        context?.let { AiCatalogueExtractor() }
     }
 
     val allStores: Flow<List<Store>> = storeDao.getAllStores()
@@ -275,8 +275,6 @@ class ShoppingRepository(
                     }
                 }
             }
-
-            onProgress(index + 1, items.size, item.name)
 
             // Run one Gemini image request at a time to avoid bursting the model quota.
             if (index < items.lastIndex) kotlinx.coroutines.delay(500L)
