@@ -1,10 +1,7 @@
 package com.example.ai
 
-import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.util.Log
-import com.example.data.model.CatalogueItem
 import com.google.firebase.Firebase
 import com.google.firebase.ai.GenerativeBackend
 import com.google.firebase.ai.ai
@@ -40,7 +37,7 @@ data class AiFlyerExtractionResult(
     val sourceDescription: String
 )
 
-class AiCatalogueExtractor(private val context: Context) {
+class AiCatalogueExtractor {
 
     // Define JSON Schema for Gemini structured output
     private val productItemSchema = Schema.obj(
