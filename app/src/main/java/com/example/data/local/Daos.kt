@@ -58,6 +58,9 @@ interface CatalogueItemDao {
 
     @Query("SELECT COUNT(*) FROM catalogue_items WHERE storeId = :storeId")
     suspend fun getCountForStore(storeId: String): Int
+
+    @Query("UPDATE catalogue_items SET imageUrl = :imageUrl WHERE storeId = :storeId AND id = :itemId")
+    suspend fun updateProductImage(storeId: String, itemId: String, imageUrl: String)
 }
 
 @Dao
